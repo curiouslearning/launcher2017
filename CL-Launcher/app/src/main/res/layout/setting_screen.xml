@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:gravity="top"
+    android:padding="20dp">
+    <RelativeLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="top">
+
+        <TextView
+            android:id="@+id/menu_setting_password"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/password_txt"
+            android:textColor="@color/black"
+            android:drawablePadding="10dp"
+            android:background="@drawable/favorite_background"
+            android:gravity="center_vertical"
+            android:drawableLeft="@drawable/ic_action_password"
+            android:textSize="@dimen/option_item_text_size"/>
+
+
+        <RadioGroup
+            android:id="@+id/menu_setting_passwordGroup"
+            android:layout_below="@+id/menu_setting_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="10dp"
+            android:layout_gravity="center"
+            android:layout_marginLeft="50dp">
+            <RadioButton
+                android:id="@+id/setting_password_defaultTxt"
+                android:layout_marginTop="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/password_default"
+                android:textColor="@color/black"
+                android:textSize="@dimen/option_item_text_size"
+                android:paddingLeft="10dp"
+               />
+            <RadioButton
+                android:id="@+id/setting_password_clPwdTxt"
+                android:layout_marginTop="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/password_cl"
+                android:textColor="@color/black"
+                android:textSize="@dimen/option_item_text_size"
+                android:paddingLeft="10dp"/>
+
+            <include
+                android:id="@+id/ll_pwd"
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                layout="@layout/password_setting"
+                android:layout_margin="10dp"
+                android:visibility="gone"/>
+
+            <RadioButton
+                android:id="@+id/setting_password_devicePwdTxt"
+                android:layout_marginTop="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/password_android"
+                android:textColor="@color/black"
+                android:textSize="@dimen/option_item_text_size"
+                android:paddingLeft="10dp"/>
+        </RadioGroup>
+
+        <!--   <TextView
+              android:id="@+id/setting_password_defaultTxt"
+              android:layout_below="@+id/menu_setting_password"
+              android:layout_marginTop="10dp"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:text="@string/password_default"
+              android:textColor="@color/black"
+              android:layout_gravity="center"
+              android:textSize="@dimen/option_item_text_size"
+              android:layout_marginLeft="50dp"
+              />
+
+          <TextView
+              android:id="@+id/setting_password_clPwdTxt"
+              android:layout_below="@+id/setting_password_defaultTxt"
+              android:layout_marginTop="10dp"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:text="@string/password_cl"
+              android:textColor="@color/black"
+              android:layout_gravity="center"
+              android:layout_marginLeft="50dp"
+              android:textSize="@dimen/option_item_text_size"/>
+          <TextView
+              android:id="@+id/setting_password_devicePwdTxt"
+              android:layout_below="@+id/setting_password_clPwdTxt"
+              android:layout_marginTop="10dp"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:text="@string/password_android"
+              android:textColor="@color/black"
+              android:layout_gravity="center"
+              android:layout_marginLeft="50dp"
+              android:textSize="@dimen/option_item_text_size"/>-->
+
+       <!-- <TextView
+            android:id="@+id/setting_restrictHome_screenTxt"
+            android:layout_marginTop="20dp"
+            android:layout_below="@+id/menu_setting_passwordGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/restrict_setting_screen"
+            android:textColor="@color/black"
+            android:drawablePadding="10dp"
+            android:layout_gravity="center"
+            android:textSize="@dimen/option_item_text_size"/>-->
+        <TextView
+            android:id="@+id/setting_restrictStatusbarTxt"
+            android:layout_below="@+id/setting_restrictHome_screenTxtSwitch"
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/restrict_status_bar"
+            android:textColor="@color/black"
+            android:drawablePadding="10dp"
+            android:layout_gravity="center"
+            android:textSize="@dimen/option_item_text_size"
+            android:visibility="gone"/>
+
+        <Switch
+            android:id="@+id/setting_restrictHome_screenTxtSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/restrict_setting_screen"
+            android:layout_marginTop="50dp"
+            android:layout_below="@+id/menu_setting_passwordGroup"
+            android:textColor="@color/black"
+            android:paddingRight="50dp"
+            android:layout_gravity="center"
+            android:textSize="@dimen/option_item_text_size"/>
+
+
+    </RelativeLayout>
+
+</ScrollView>

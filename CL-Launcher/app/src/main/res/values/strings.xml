@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">CL-Launcher</string>
+
+
+    <string name="home_title">Home Sample</string>
+    <string name="show_all_apps">All</string>
+
+    <!-- Home Menus -->
+    <string name="menu_wallpaper">Wallpaper</string>
+    <string name="menu_search">Search</string>
+    <string name="menu_settings">Settings</string>
+
+    <!-- Wallpaper -->
+    <string name="wallpaper_instructions">Tap picture to set portrait wallpaper</string>
+    <string name="application">Applications</string>
+
+    <string name="share_launcher">Share CL Launcher</string>
+    <string name="help">Help</string>
+    <string name="setting">Settings</string>
+
+
+    <string name="password_txt">Password</string>
+    <string name="password_default">No-Lock</string>
+    <string name="password_cl">CL-Password</string>
+    <string name="password_android">Device Password</string>
+
+    <string name="restrict_setting_screen">Restrict Setting Screen</string>
+    <string name="restrict_status_bar">Restrict Status bar</string>
+    <string name="device_lock_string">CL-Launcher need to access followings for device lock.</string>
+
+
+</resources>

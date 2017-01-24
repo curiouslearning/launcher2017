@@ -1,0 +1,19 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="home_padding">50dp</dimen>
+    <dimen name="header_height">80dp</dimen>
+
+    <dimen name="header_txt_left_margin">30dp</dimen>
+    <!--<dimen name="home_padding">50dp</dimen>
+    <dimen name="home_padding">50dp</dimen>
+    <dimen name="home_padding">50dp</dimen>-->
+    <integer name="popup_height">80</integer>
+    <integer name="popup_width">500</integer>
+    <dimen name="righthand_popup_y_pos">80dp</dimen>
+
+    <dimen name="option_item_text_size">20sp</dimen>
+
+
+</resources>
