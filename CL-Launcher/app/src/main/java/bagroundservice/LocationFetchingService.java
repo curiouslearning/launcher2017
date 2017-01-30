@@ -290,7 +290,9 @@ public class LocationFetchingService extends Service implements
                     locationModel.setSync_time(Utils.getTimeFormat(mLocation.getTime()));
                     locationModel.setSync_status(Constants.STATUS_NOT_SYNC);
                     // _insertIntoDB(locationModel);
-                    mLocationTable.insertLocationInfo(locationModel);
+                    if(mLocationTable!=null&&mLocationTable.isOpen()) {
+                        mLocationTable.insertLocationInfo(locationModel);
+                    }
                 }
             }
         }).start();

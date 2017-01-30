@@ -93,6 +93,10 @@ public class LocationTable {
         this.mDbHelper.close();
     }
 
+    public boolean isOpen(){
+        return this.mDb.isOpen();
+    }
+
     /**
      * Create a new AppUsageModel. If the AppUsageModel is successfully created return the new
      * rowId for that AppUsageModel, otherwise return a -1 to indicate failure.

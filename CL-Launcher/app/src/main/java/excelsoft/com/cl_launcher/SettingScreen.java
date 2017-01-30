@@ -61,14 +61,16 @@ public class SettingScreen extends AppCompatActivity implements
 
         if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_DEFAULT)){
             dfltPwd.setChecked(true);
+            invisiblePwdView();
         }else  if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_CL)){
             clPwd.setChecked(true);
             visiblePwdView();
-            mSwitch.setChecked(settingManager.getRestrictSettingScreen());
 
         }else  if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_ANDROID)){
             devicePwd.setChecked(true);
+            invisiblePwdView();
         }
+        mSwitch.setChecked(settingManager.getRestrictSettingScreen());
 
 
 
@@ -182,7 +184,7 @@ public class SettingScreen extends AppCompatActivity implements
     private void handleVisibilityInSaveMode(){
         savePwdBtn.setText("Edit");
         savePwdBtn.setTag("edit");
-        txtMsg.setText("Password already set.");
+        txtMsg.setText("Password set.");
         txtMsg.setVisibility(View.VISIBLE);
         edCpwd.setVisibility(View.GONE);
         edPwd.setVisibility(View.GONE);

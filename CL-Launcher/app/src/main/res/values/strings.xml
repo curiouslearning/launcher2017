@@ -24,7 +24,7 @@
     <string name="password_cl">CL-Password</string>
     <string name="password_android">Device Password</string>
 
-    <string name="restrict_setting_screen">Restrict Setting Screen</string>
+    <string name="restrict_setting_screen">Restrict Settings</string>
     <string name="restrict_status_bar">Restrict Status bar</string>
     <string name="device_lock_string">CL-Launcher need to access followings for device lock.</string>
 
