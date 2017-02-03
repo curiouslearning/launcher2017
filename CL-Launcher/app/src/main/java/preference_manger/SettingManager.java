@@ -43,7 +43,7 @@ public class SettingManager{
 
 
     public long getLastSyncTime(){
-        return mSharedPreferences.getLong(LAST_SYNC_TIME_KEY,0);
+        return mSharedPreferences.getLong(LAST_SYNC_TIME_KEY,0L);
     }
 
 

@@ -134,6 +134,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private static boolean mWallpaperChecked;
     private static ArrayList<ApplicationInfo> mApplications;
     private static LinkedList<ApplicationInfo> mFavorites;
+    private static boolean isSettingClick = false;
+    private static boolean isExitClick;
 
     private final BroadcastReceiver mWallpaperReceiver = new WallpaperIntentReceiver();
     private final BroadcastReceiver mApplicationsReceiver = new ApplicationsIntentReceiver();
@@ -173,11 +175,15 @@ public class Home extends BaseActivity implements View.OnClickListener{
         super.onCreate(icicle);
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
         allFunctionalInitiationAction();
+
     }
 
 
     private void allWidgetInit(){
         setContentView(R.layout.home);
+        isExitClick = false;
+        screenStateFilter = new IntentFilter();
+        screenStateFilter.addAction(Intent.ACTION_USER_PRESENT);
         menuImg = (ImageView) findViewById(R.id.img_context_menu);
         exitImg = (ImageView) findViewById(R.id.img_exit_menu);
         refreshImg = (ImageView) findViewById(R.id.img_refresh_menu);
@@ -318,6 +324,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
         if(manager!=null&&view!=null)
             manager.removeView(view);
 
+        unregisterReceiver(mScreenStateReceiver);
+
     }
 
 
@@ -335,6 +343,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     protected void onResume() {
         super.onResume();
         bindRecents();
+        registerReceiver(mScreenStateReceiver, screenStateFilter);
+        Log.i(TAG,"onResume called");
     }
 
     @Override
@@ -754,6 +764,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 showPopup(v);
                 break;
             case R.id.img_exit_menu:
+                isExitClick = true;
                 handleLauncherExit();
                 break;
             case R.id.img_refresh_menu:
@@ -761,6 +772,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 break;
 
             case R.id.menu_setting:
+                isSettingClick = true;
                 dismisPopup();
                 callingSettingScreen();
                 break;
@@ -794,7 +806,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private void callingSettingScreen(){
         if(settingManager.getRestrictSettingScreen() && settingManager.getEnablePasswordFormat().equals(Constants.PWD_CL)) {
 
-            showPasswordAlert(Constants.OPEN_SETTING);
+            showPasswordAlert(Constants.OPEN_SETTING,false);
+        }else if(settingManager.getRestrictSettingScreen() && settingManager.getEnablePasswordFormat().equals(Constants.PWD_ANDROID)) {
+            doAndroidPassCodeLock();
         }else{
             handleOpenSettingScreen();
         }
@@ -1036,6 +1050,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.i("Home","onActivityResult requestCode :"+requestCode);
+        super.onActivityResult(requestCode,resultCode,data);
         switch (requestCode) {
             // Check for the integer request code originally supplied to startResolutionForResult().
             case 0x1:
@@ -1150,6 +1165,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
             mAppUsageAlarmReceiver = new AppUsageAlarmReceiver();
             mAppUsageAlarmReceiver.setAlarm(this);
             grantedAllPermission =true;
+            checkLocationSettings();
             // startOverlay();
         }
     }
@@ -1227,9 +1243,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
 
-    public  void showPasswordAlert(final int requestCode){
+    public  void showPasswordAlert(final int requestCode, final boolean error){
 
         final EditText pwdEd = new EditText(this);
+        if(error)
+            pwdEd.setError("Enter valid password.");
+
         AlertDialog.Builder bldr = new AlertDialog.Builder(this);
         bldr.setMessage("Please enter CL-Password.");
         bldr.setView(pwdEd);
@@ -1239,10 +1258,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                 if(TextUtils.isEmpty(pwdEd.getText().toString())){
                     showToast(Home.this,"Enter valid password.");
+                    showPasswordAlert(requestCode,true);
                 }else{
                     if(!settingManager.getCLPassword().equals(
                             pwdEd.getText().toString())){
                         showToast(Home.this,"Enter valid password.");
+                        showPasswordAlert(requestCode,true);
                     }else{
                         dialog.dismiss();
                         handleCLPasswordVerifiedAction(requestCode);
@@ -1289,16 +1310,37 @@ public class Home extends BaseActivity implements View.OnClickListener{
         if(option.equals(Constants.PWD_DEFAULT)){
             exitLauncher();
         }else if(option.equals(Constants.PWD_CL)){
-            showPasswordAlert(Constants.EXIT_LAUNCHER_REQUEST);
+            showPasswordAlert(Constants.EXIT_LAUNCHER_REQUEST,false);
         }else if(option.equals(Constants.PWD_ANDROID)){
-
-            DevicePolicyManager manager = CLDeviceManger.getCLDevicePolicyManager(this);
-            if(manager!=null){
-                manager.lockNow();
-            }
+            doAndroidPassCodeLock();
         }
     }
 
+    IntentFilter screenStateFilter;
+    BroadcastReceiver mScreenStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Intent.ACTION_USER_PRESENT)) {
+                // Toast.makeText(context, "ACTION_SCREEN_ON", Toast.LENGTH_SHORT).show();
+                if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_ANDROID)){
+
+                    if(isExitClick) {
+                        exitLauncher();
+                    }else if(isSettingClick){
+                        handleOpenSettingScreen();
+                    }
+                }
+
+            }
+        }
+    };
 
 
+
+    private void doAndroidPassCodeLock(){
+        DevicePolicyManager manager = CLDeviceManger.getCLDevicePolicyManager(this);
+        if(manager!=null){
+            manager.lockNow();
+        }
+    }
 }

@@ -36,6 +36,9 @@ public class SettingScreen extends AppCompatActivity implements
     private SettingManager settingManager;
     private TextView txtMsg;
     private Switch mSwitch;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,6 +72,8 @@ public class SettingScreen extends AppCompatActivity implements
         }else  if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_ANDROID)){
             devicePwd.setChecked(true);
             invisiblePwdView();
+            mSwitch.setEnabled(true);
+
         }
         mSwitch.setChecked(settingManager.getRestrictSettingScreen());
 
@@ -79,6 +84,8 @@ public class SettingScreen extends AppCompatActivity implements
         mSwitch.setOnCheckedChangeListener(this);
         savePwdBtn.setOnClickListener(this);
         cancelPwdBtn.setOnClickListener(this);
+
+        Utils.getMemoryInfo(this);
 
 
     }
@@ -98,7 +105,8 @@ public class SettingScreen extends AppCompatActivity implements
                 break;
             case R.id.setting_password_devicePwdTxt:
                 invisiblePwdView();
-                settingManager.setEnablePasswordFormat(Constants.PWD_ANDROID);
+                mSwitch.setEnabled(true);
+                mSwitch.setChecked(settingManager.getRestrictSettingScreen());
                 doForAndroidPinLock();
                 break;
 
@@ -213,7 +221,7 @@ public class SettingScreen extends AppCompatActivity implements
     private void doForAndroidPinLock(){
         boolean active = deviceManger.isAdminActive(compName);
         if (active) {
-            deviceManger.lockNow();
+            settingManager.setEnablePasswordFormat(Constants.PWD_ANDROID);
 
         }else{
             Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
@@ -229,7 +237,9 @@ public class SettingScreen extends AppCompatActivity implements
             boolean active = deviceManger.isAdminActive(compName);
             if (active) {
                 // if available then lock
-                deviceManger.lockNow();
+               // deviceManger.lockNow();
+                settingManager.setEnablePasswordFormat(Constants.PWD_ANDROID);
+
             }
         }
     }

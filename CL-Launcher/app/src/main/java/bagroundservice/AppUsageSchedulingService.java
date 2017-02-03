@@ -5,6 +5,7 @@ import android.content.Intent;
 
 import java.util.Calendar;
 
+import preference_manger.SettingManager;
 import util.UStats;
 
 /**
@@ -48,13 +49,13 @@ public class AppUsageSchedulingService extends IntentService {
 
     private void handleAppUsageData(){
       //  Log.i("startTime",""+SettingManager.getInstance(this).getLastSyncTime());
-      //  startTime = SettingManager.getInstance(this).getLastSyncTime();
-      //  if(startTime==0){
+        startTime = SettingManager.getInstance(this).getLastSyncTime();
+        if(startTime==0){
             Calendar calendar = Calendar.getInstance();
             calendar.add(Calendar.DATE, -1);
             startTime = calendar.getTimeInMillis();
-       //     SettingManager.getInstance(this).setLastSyncTime(startTime);
-      //  }
+            SettingManager.getInstance(this).setLastSyncTime(startTime);
+        }
         UStats.getInstance(this).getCurrentUsageStatus(this,startTime);
     }
 

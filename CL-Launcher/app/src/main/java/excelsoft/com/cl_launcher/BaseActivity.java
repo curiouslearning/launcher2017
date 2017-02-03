@@ -1,6 +1,7 @@
 package excelsoft.com.cl_launcher;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -160,11 +161,18 @@ public class BaseActivity extends Activity implements
      */
     @Override
     public void onResult(LocationSettingsResult locationSettingsResult) {
+        Log.i(TAG,"onResult called");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         mGoogleApiClient.disconnect();
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+       super.onActivityResult(requestCode,resultCode,data);
     }
 }
