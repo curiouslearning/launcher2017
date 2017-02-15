@@ -71,7 +71,8 @@
                 android:text="@string/password_android"
                 android:textColor="@color/black"
                 android:textSize="@dimen/option_item_text_size"
-                android:paddingLeft="10dp"/>
+                android:paddingLeft="10dp"
+                android:visibility="gone"/>
         </RadioGroup>
 
         <!--   <TextView

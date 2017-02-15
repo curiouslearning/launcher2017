@@ -30,4 +30,7 @@ dependencies {
     compile 'com.google.android.gms:play-services:7.0.0'
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:design:23.2.1'
+    compile 'com.google.code.gson:gson:2.2.4'
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.0.2'
 }
