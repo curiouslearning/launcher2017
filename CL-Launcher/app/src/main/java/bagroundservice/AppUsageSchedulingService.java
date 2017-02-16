@@ -5,8 +5,10 @@ import android.content.Intent;
 
 import java.util.Calendar;
 
+import database.BackgroundDataCollectionDB;
+import database.DBAdapter;
 import preference_manger.SettingManager;
-import util.UStats;
+import util.MemoryStats;
 
 /**
  * This {@code IntentService} does the app's actual work.
@@ -22,20 +24,37 @@ public class AppUsageSchedulingService extends IntentService {
 
 
     long startTime =0;
+    DBAdapter mDbAdapter;
+    BackgroundDataCollectionDB backgroundDataCollectionDB;
 
 
 
     @Override
     public void onCreate() {
         super.onCreate();
+        mDbAdapter = new DBAdapter(this);
+        mDbAdapter.open();
+        backgroundDataCollectionDB = new BackgroundDataCollectionDB(this);
+        backgroundDataCollectionDB.open();
 
+    }
+
+
+    @Override
+    public void onDestroy() {
+        if(backgroundDataCollectionDB!=null)
+            backgroundDataCollectionDB.close();
+        if(mDbAdapter!=null)
+            mDbAdapter.close();
+
+        super.onDestroy();
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
         // BEGIN_INCLUDE(service_onhandle)
         // The URL from which to fetch content.
-         handleAppUsageData();
+        handleAppUsageData();
         // Release the wake lock provided by the BroadcastReceiver.
         AppUsageAlarmReceiver.completeWakefulIntent(intent);
         // END_INCLUDE(service_onhandle)
@@ -48,7 +67,7 @@ public class AppUsageSchedulingService extends IntentService {
      */
 
     private void handleAppUsageData(){
-      //  Log.i("startTime",""+SettingManager.getInstance(this).getLastSyncTime());
+        //  Log.i("startTime",""+SettingManager.getInstance(this).getLastSyncTime());
         startTime = SettingManager.getInstance(this).getLastSyncTime();
         if(startTime==0){
             Calendar calendar = Calendar.getInstance();
@@ -56,7 +75,8 @@ public class AppUsageSchedulingService extends IntentService {
             startTime = calendar.getTimeInMillis();
             SettingManager.getInstance(this).setLastSyncTime(startTime);
         }
-        UStats.getInstance(this).getCurrentUsageStatus(this,startTime);
+      //  UStats.getInstance(this).getCurrentUsageStatus(this,startTime);
+        new MemoryStats(mDbAdapter,backgroundDataCollectionDB,this)._doInsertInfo();
     }
 
 }

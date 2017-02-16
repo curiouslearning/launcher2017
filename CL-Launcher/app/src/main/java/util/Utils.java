@@ -1,6 +1,5 @@
 package util;
 
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -9,8 +8,8 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
+import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Gravity;
 import android.widget.Toast;
 
@@ -19,14 +18,9 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-
-import static android.content.Context.ACTIVITY_SERVICE;
 
 /**
  * Created by IMFCORP\alok.acharya on 19/12/16.
@@ -118,7 +112,7 @@ public class Utils {
             for(int i = 0; i < address.getMaxAddressLineIndex(); i++) {
                 addressFragments.add(address.getAddressLine(i));
             }
-           return TextUtils.join(System.getProperty("line.separator"), addressFragments);
+            return TextUtils.join(System.getProperty("line.separator"), addressFragments);
         }
 
         return "";
@@ -172,49 +166,17 @@ public class Utils {
     }
 
 
+    public static String getDeviceId(Context ctx){
 
-    public static void getMemoryInfo(Context context){
-        /*ActivityManager activityManager = (ActivityManager)ctx.getSystemService(ACTIVITY_SERVICE);
-        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
-
-        activityManager.getMemoryInfo(memoryInfo);
-
-        Log.i("Info", " memoryInfo.availMem " + memoryInfo.availMem);
-        Log.i("Info", " memoryInfo.lowMemory " + memoryInfo.lowMemory);
-        Log.i("Info", " memoryInfo.threshold " + memoryInfo.threshold);*/
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
-        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
-        activityManager.getMemoryInfo(memoryInfo);
-
-        Log.i("Info", " memoryInfo.availMem " + memoryInfo.availMem + "\n" );
-        Log.i("Info", " memoryInfo.lowMemory " + memoryInfo.lowMemory + "\n" );
-        Log.i("Info", " memoryInfo.threshold " + memoryInfo.threshold + "\n" );
-
-        List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = activityManager.getRunningAppProcesses();
-
-        Map<Integer, String> pidMap = new TreeMap<Integer, String>();
-        for (ActivityManager.RunningAppProcessInfo runningAppProcessInfo : runningAppProcesses)
-        {
-            pidMap.put(runningAppProcessInfo.pid, runningAppProcessInfo.processName);
-        }
-
-        Collection<Integer> keys = pidMap.keySet();
-
-        for(int key : keys)
-        {
-            int pids[] = new int[1];
-            pids[0] = key;
-            android.os.Debug.MemoryInfo[] memoryInfoArray = activityManager.getProcessMemoryInfo(pids);
-            for(android.os.Debug.MemoryInfo pidMemoryInfo: memoryInfoArray)
-            {
-                Log.i("Info", String.format("** MEMINFO in pid %d [%s] **\n",pids[0],pidMap.get(pids[0])));
-                Log.i("Info", " pidMemoryInfo.getTotalPrivateDirty(): " + pidMemoryInfo.getTotalPrivateDirty() + "\n");
-                Log.i("Info", " pidMemoryInfo.getTotalPss(): " + pidMemoryInfo.getTotalPss() + "\n");
-                Log.i("Info", " pidMemoryInfo.getTotalSharedDirty(): " + pidMemoryInfo.getTotalSharedDirty() + "\n");
-            }
-        }
-
-
-
+        return Settings.Secure.getString(ctx.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
     }
+
+    public static String getAndroidVersion(){
+        return ""+android.os.Build.VERSION.SDK_INT;
+    }
+
+
+
+
 }

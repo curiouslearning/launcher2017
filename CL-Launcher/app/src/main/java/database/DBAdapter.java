@@ -44,6 +44,15 @@ public class DBAdapter {
 
 
 
+	private static final String CREATE_TABLE_INFO =
+			"create table BackgroundDataCollectionTable (_id integer primary key autoincrement, "
+					+ BackgroundDataCollectionDB.NAME+ " TEXT,"
+					+ BackgroundDataCollectionDB.TIME_STAMP+ " TEXT,"
+					+ BackgroundDataCollectionDB.JSON_DATA+ " TEXT" + ");";
+
+
+
+
 	private final Context context;
 	private DatabaseHelper DBHelper;
 	private SQLiteDatabase db;
@@ -74,6 +83,7 @@ public class DBAdapter {
 
 			db.execSQL(CREATE_TABLE_APP_USAGE_INFO);
 			db.execSQL(CREATE_TABLE_LOCATION_INFO);
+			db.execSQL(CREATE_TABLE_INFO);
 		}
 
 		@Override

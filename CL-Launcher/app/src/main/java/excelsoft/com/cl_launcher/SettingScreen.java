@@ -84,10 +84,6 @@ public class SettingScreen extends AppCompatActivity implements
         mSwitch.setOnCheckedChangeListener(this);
         savePwdBtn.setOnClickListener(this);
         cancelPwdBtn.setOnClickListener(this);
-
-        Utils.getMemoryInfo(this);
-
-
     }
 
     @Override

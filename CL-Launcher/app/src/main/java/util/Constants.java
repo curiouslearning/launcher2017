@@ -33,5 +33,13 @@ public class Constants {
     public static final String  PWD_CL = "1";
     public static final String  PWD_ANDROID = "2";
 
+    public static final String KEY_MEMORY_USAGE ="MEMORY_USAGE";
+    public static final String KEY_GPS_LOC_TIME ="GPS_LOC_TIME";
+    public static final String KEY_IN_APP ="IN_APP";
+    public static final String KEY_IN_APP_SECTION ="IN_APP_SECTION";
+    public static final String KEY_IN_APP_SCORE ="IN_APP_SCORE";
+    public static final String KEY_IN_APP_RESPONSE ="IN_APP_RESPONSE";
+    public static final String KEY_IN_APP_TOUCH ="IN_APP_TOUCH";
+
 
 }
