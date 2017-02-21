@@ -129,6 +129,7 @@ public class SettingScreen extends AppCompatActivity implements
         if(mSwitch.isEnabled()){
             mSwitch.setEnabled(false);
         }
+
     }
 
 
@@ -144,7 +145,11 @@ public class SettingScreen extends AppCompatActivity implements
         if(v.getId()==R.id.btn_savePwd){
             handleClickSaveBtn();
         }else  if(v.getId()==R.id.btn_CancelPwd){
-            handleVisibilityInSaveMode();
+            if(settingManager.getCLPassword().equalsIgnoreCase("")||settingManager.getCLPassword()==null){
+                dfltPwd.setChecked(true);
+            }else {
+                handleVisibilityInSaveMode();
+            }
         }
     }
 

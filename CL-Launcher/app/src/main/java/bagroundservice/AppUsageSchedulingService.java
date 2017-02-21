@@ -9,6 +9,7 @@ import database.BackgroundDataCollectionDB;
 import database.DBAdapter;
 import preference_manger.SettingManager;
 import util.MemoryStats;
+import util.UStats;
 
 /**
  * This {@code IntentService} does the app's actual work.
@@ -75,8 +76,10 @@ public class AppUsageSchedulingService extends IntentService {
             startTime = calendar.getTimeInMillis();
             SettingManager.getInstance(this).setLastSyncTime(startTime);
         }
-      //  UStats.getInstance(this).getCurrentUsageStatus(this,startTime);
-        new MemoryStats(mDbAdapter,backgroundDataCollectionDB,this)._doInsertInfo();
+        UStats instance =  UStats.getInstance(this);
+        instance.setDBHandler(mDbAdapter,backgroundDataCollectionDB);
+        instance.getCurrentUsageStatus(this,startTime);
+        MemoryStats.getInstance(mDbAdapter,backgroundDataCollectionDB,this)._doInsertInfo();
     }
 
 }

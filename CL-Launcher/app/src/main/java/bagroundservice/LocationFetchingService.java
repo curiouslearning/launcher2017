@@ -18,9 +18,12 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import database.BackgroundDataCollectionDB;
 import database.DBAdapter;
-import database.LocationTable;
+import model.BackgroundDataModel;
 import model.LocationModel;
 import util.Constants;
 import util.LogUtil;
@@ -64,13 +67,14 @@ public class LocationFetchingService extends Service implements
      * Represents a geographical location.
      */
     private Location mCurrentLocation;
-  //  protected ResultReceiver mReceiver;
+    //  protected ResultReceiver mReceiver;
     ConnectionResult mConnectionResult;
-
-
     private DBAdapter mDbAdapter;
-    private LocationTable mLocationTable;
+    BackgroundDataCollectionDB backgroundDataCollectionDB;
+    // private LocationTable mLocationTable;
     private LocationModel locationModel;
+    private String deviceId ="";
+    private   Gson gson ;
 
     public LocationFetchingService() {
 
@@ -87,8 +91,10 @@ public class LocationFetchingService extends Service implements
 
         mDbAdapter = new DBAdapter(this);
         mDbAdapter.open();
-        mLocationTable = new LocationTable(this);
-        mLocationTable.open();
+        backgroundDataCollectionDB = new BackgroundDataCollectionDB(this);
+        backgroundDataCollectionDB.open();
+        deviceId = Utils.getDeviceId(this);
+        gson = new GsonBuilder().create();
     }
 
 
@@ -167,8 +173,8 @@ public class LocationFetchingService extends Service implements
             mGoogleApiClient.disconnect();
         }
 
-        if(mDbAdapter!=null&&mLocationTable!=null){
-            mLocationTable.close();
+        if(mDbAdapter!=null&&backgroundDataCollectionDB!=null){
+            backgroundDataCollectionDB.close();
             mDbAdapter.close();
         }
     }
@@ -268,9 +274,9 @@ public class LocationFetchingService extends Service implements
      * Sends a resultCode and message to the receiver.
      */
     private void deliverResultToReceiver(int resultCode,Location mLocation) {
-       // Bundle bundle = new Bundle();
-      //  bundle.putParcelable(Constants.LOCATION_KEY, mCurrentLocation);
-       // mReceiver.send(resultCode, bundle);
+        // Bundle bundle = new Bundle();
+        //  bundle.putParcelable(Constants.LOCATION_KEY, mCurrentLocation);
+        // mReceiver.send(resultCode, bundle);
         LogUtil.createLog("launher", "got location in launcher : lat ::" + mLocation.getLatitude() + ":: longitude:" + mLocation.getLongitude()
                 +" : time"+ Utils.getTimeFormat(mLocation.getTime()));
         _insertIntoDB(mLocation);
@@ -284,14 +290,21 @@ public class LocationFetchingService extends Service implements
             public void run() {
                 if(mLocation!=null) {
                     locationModel = new LocationModel();
-                    locationModel.setLatitude("" + mLocation.getLatitude());
-                    locationModel.setLongitude("" + mLocation.getLongitude());
-                    locationModel.setAddress(Utils.getAddressFromGeoLocation(LocationFetchingService.this, mLocation));
-                    locationModel.setSync_time(Utils.getTimeFormat(mLocation.getTime()));
-                    locationModel.setSync_status(Constants.STATUS_NOT_SYNC);
-                    // _insertIntoDB(locationModel);
-                    if(mLocationTable!=null&&mLocationTable.isOpen()) {
-                        mLocationTable.insertLocationInfo(locationModel);
+                    locationModel.setKey(Constants.KEY_GPS_LOC_TIME);
+                    LocationModel.Value value = locationModel.new Value();
+                    value.setLat(mLocation.getLatitude());
+                    value.set_longitude(mLocation.getLongitude());
+                    value.setTimestamp(mLocation.getTime());
+                    value.setTabletID(deviceId);
+                    locationModel.setValue(value);
+                    String  jsonInfo = gson.toJson(locationModel);
+                    LogUtil.createLog(TAG,"JSON INFO ::"+jsonInfo);
+                    BackgroundDataModel model = new BackgroundDataModel();
+                    model.setName(LocationFetchingService.this.getPackageName());
+                    model.setTimeStamp(System.currentTimeMillis()+"");
+                    model.setJsonData(jsonInfo);
+                    if(backgroundDataCollectionDB!=null){
+                        backgroundDataCollectionDB.insertInfo(model);
                     }
                 }
             }

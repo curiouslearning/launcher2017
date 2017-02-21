@@ -8,6 +8,9 @@ import android.content.Context;
 import android.os.Build;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -16,9 +19,10 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import database.BackgroundDataCollectionDB;
 import database.DBAdapter;
-import database.DeviceAppUsageTable;
 import model.AppUsageModel;
+import model.BackgroundDataModel;
 
 import static android.content.Context.ACTIVITY_SERVICE;
 
@@ -29,7 +33,8 @@ public class UStats {
     private DateFormat mDateFormat = new SimpleDateFormat();
     public static final String TAG = UStats.class.getSimpleName();
     private DBAdapter mDbAdapter;
-    private DeviceAppUsageTable mDeviceAppUsageTable;
+    // private DeviceAppUsageTable mDeviceAppUsageTable;
+    private BackgroundDataCollectionDB backgroundDataCollectionDB;
     private Context _Context;
     private long TimeInforground = 500 ;
     private int minutes=500,seconds=500,hours=500 ;
@@ -44,8 +49,12 @@ public class UStats {
 
     private UStats(Context _Context){
         this._Context=_Context;
-        mDbAdapter = new DBAdapter(_Context);
-        mDeviceAppUsageTable = new DeviceAppUsageTable(_Context);
+    }
+
+    public void setDBHandler(DBAdapter mDbAdapter,
+                             BackgroundDataCollectionDB backgroundDataCollectionDB){
+        this.mDbAdapter = mDbAdapter;
+        this.backgroundDataCollectionDB = backgroundDataCollectionDB;
     }
 
 
@@ -152,19 +161,44 @@ public class UStats {
         try{
             if(mDbAdapter!=null)
                 mDbAdapter.open();
-            if(mDeviceAppUsageTable !=null){
-                mDeviceAppUsageTable.open();
-                mDeviceAppUsageTable.insertAppUsageInfo(appUsageModel);
+            if(backgroundDataCollectionDB !=null){
+                backgroundDataCollectionDB.open();
+                BackgroundDataModel model = new BackgroundDataModel();
+                model.setName(_Context.getPackageName());
+                model.setTimeStamp(System.currentTimeMillis()+"");
+                model.setJsonData(getJsonFromModel(appUsageModel));
+                if(backgroundDataCollectionDB!=null){
+                    backgroundDataCollectionDB.insertInfo(model);
+                }
             }
         }catch(Exception e){
             e.printStackTrace();
-        }finally {
-            if(mDeviceAppUsageTable !=null)
-                mDeviceAppUsageTable.close();
-            if(mDbAdapter!=null)
-                mDbAdapter.close();
         }
     }
+
+
+    private String getJsonFromModel(AppUsageModel appUsageModel){
+        String jsonString = "";
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("KEY",Constants.KEY_IN_APP);
+            JSONObject valueObject = new JSONObject();
+            valueObject.put("tabletID",Utils.getDeviceId(_Context));
+            valueObject.put("appID",appUsageModel.getApp_package_name());
+            valueObject.put("time_started",appUsageModel.getApp_first_time_stamped());
+            valueObject.put("time_used_sec",appUsageModel.getTime_in_foreground());
+            jsonObject.put("value",valueObject);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        jsonString = jsonObject.toString();
+        LogUtil.createLog(TAG,"JSON INFO ::"+jsonString);
+        return jsonString;
+    }
+
+
 
     /**
      *

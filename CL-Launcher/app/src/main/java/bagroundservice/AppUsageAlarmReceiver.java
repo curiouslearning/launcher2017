@@ -98,7 +98,7 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
          */
 
        long repeatTime = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
-       // long repeatTime = 10000;
+       //long repeatTime = 10000;
         // Set the alarm to fire at approximately 8:30 a.m., according to the device's
         // clock, and to repeat once a day.
         alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP,

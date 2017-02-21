@@ -1,6 +1,5 @@
 package database;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -8,11 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.io.File;
-import java.util.ArrayList;
 
-import model.LocationModel;
 import util.Constants;
-import util.LogUtil;
 
 import static database.DBAdapter.DATABASE_NAME;
 import static database.DBAdapter.DATABASE_VERSION;
@@ -104,7 +100,7 @@ public class LocationTable {
      * @return rowId or -1 if failed
      */
 
-
+/*
     public long insertLocationInfo(LocationModel info){
         LogUtil.createLog(TAG,"inserting data into  data base...");
         ContentValues initialValues = new ContentValues();
@@ -114,11 +110,11 @@ public class LocationTable {
         initialValues.put(SYNC_STATUS, info.getSync_status());
         initialValues.put(SYNC_TIME, info.getSync_time());
         return this.mDb.insert(LOCATION_INFO_TABLE, null, initialValues);
-    }
+    }*/
 
 
 
-    public ArrayList<LocationModel> getLocationInfo() {
+   /* public ArrayList<LocationModel> getLocationInfo() {
         String selectQuery = "SELECT * FROM " + LOCATION_INFO_TABLE;
         ArrayList<LocationModel> appUsageModelList = new ArrayList<LocationModel>();
         LocationModel info = new LocationModel();
@@ -137,7 +133,7 @@ public class LocationTable {
         return appUsageModelList;
 
 
-    }
+    }*/
 
 
 

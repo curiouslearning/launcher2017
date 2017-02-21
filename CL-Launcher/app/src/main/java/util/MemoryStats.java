@@ -30,9 +30,19 @@ public class MemoryStats {
     private DBAdapter mDbAdapter;
     private BackgroundDataCollectionDB backgroundDataCollectionDB;
     private Context _Context;
+    private static MemoryStats _instance = null;
+
+    public static MemoryStats getInstance(DBAdapter mDbAdapter,BackgroundDataCollectionDB backgroundDataCollectionDB,
+                                          Context _Context){
+        if(_instance==null){
+            return new MemoryStats(mDbAdapter,backgroundDataCollectionDB,
+                    _Context);
+        }
+        return  _instance;
+    }
 
 
-    public MemoryStats(DBAdapter mDbAdapter,BackgroundDataCollectionDB backgroundDataCollectionDB,
+    private MemoryStats(DBAdapter mDbAdapter,BackgroundDataCollectionDB backgroundDataCollectionDB,
                 Context _Context){
         this.mDbAdapter=mDbAdapter;
         this.backgroundDataCollectionDB=backgroundDataCollectionDB;
@@ -95,7 +105,7 @@ public class MemoryStats {
         memoryUsage.setValue(memValue);
         Gson gson = new GsonBuilder().create();
         jsonInfo = gson.toJson(memoryUsage);
-        LogUtil.createLog("jsonInfo",jsonInfo);
+        LogUtil.createLog("JSON INFO",jsonInfo);
 
         return jsonInfo;
 

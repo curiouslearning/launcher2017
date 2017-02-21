@@ -106,4 +106,7 @@ public class AppUsageModel {
    private String  longitude;
    private String  sync_status;
    private String  sync_time;
+
+
+
 }
