@@ -181,7 +181,7 @@ public class UStats {
         String jsonString = "";
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("KEY",Constants.KEY_IN_APP);
+            jsonObject.put("key",Constants.KEY_IN_APP);
             JSONObject valueObject = new JSONObject();
             valueObject.put("tabletID",Utils.getDeviceId(_Context));
             valueObject.put("appID",appUsageModel.getApp_package_name());
