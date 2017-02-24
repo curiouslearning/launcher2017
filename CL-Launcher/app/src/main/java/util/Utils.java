@@ -3,14 +3,17 @@ package util;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.provider.Settings;
+import android.support.design.widget.Snackbar;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.Toast;
 
 import java.io.File;
@@ -176,7 +179,24 @@ public class Utils {
         return ""+android.os.Build.VERSION.SDK_INT;
     }
 
+    public static String getAppVersion(Context context){
+        try {
+            PackageManager manager = context.getPackageManager();
+            PackageInfo info = manager.getPackageInfo(
+                    context.getPackageName(), 0);
+            return info.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
 
+
+
+
+    public static void showSnackBar(String msg, View anchor){
+        Snackbar.make(anchor,msg,Snackbar.LENGTH_LONG).show();
+    }
 
 
 }

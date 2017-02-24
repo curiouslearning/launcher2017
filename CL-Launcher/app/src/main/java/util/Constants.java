@@ -13,7 +13,7 @@ public class Constants {
             Environment.getExternalStorageDirectory().getAbsolutePath()+"/CL-APP";
 
     public static final String  APK_PATH =
-           DATABASE_FILE_PATH+ File.separator+"APK";
+            DATABASE_FILE_PATH+ File.separator+"APK";
 
     public static final String  STATUS_SYNC = "0";
     public static final String  STATUS_NOT_SYNC = "1";
@@ -41,5 +41,16 @@ public class Constants {
     public static final String KEY_IN_APP_RESPONSE ="IN_APP_RESPONSE";
     public static final String KEY_IN_APP_TOUCH ="IN_APP_TOUCH";
 
+
+    //App Data parsing keys
+    public static final String KEY_VERSION ="version";
+    public static final String KEY_ID ="id";
+    public static final String KEY_APK_NAME ="apkName";
+    public static final String KEY_FILE="file";
+    public static final String KEY_TITTLE ="title";
+    public static final String KEY_CONTENT_TYPE ="content_type";
+    public static final String KEY_TYPE ="type";
+    public static final String KEY_VISIBLE ="visible";
+    public static final String KEY_APPS ="apps";
 
 }

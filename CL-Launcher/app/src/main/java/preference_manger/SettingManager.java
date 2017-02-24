@@ -13,10 +13,14 @@ public class SettingManager{
 
     private static final String PREFERENCE_KEY = "cl_launcher_preference";
     private final String LAST_SYNC_TIME_KEY = "last_sync_time";
-    private final String CL_PWD_KEY = "cl_pwd";
+    private final String CL_CREDENTIAL_KEY = "credential";
+    private final String CL_SERIAL_NO_KEY = "serialNo";
+    private final String CL_ACCESS_TOKEN_KEY = "access_token";
+    private final String CL_ACCESS_TOKEN_EXPIRE_KEY = "access_token_expire";
     private final String ENABLE_PWD_FORMAT_KEY = "cl_pwd_format";
     private final String RESTRICT_SETTING_SCREEN = "restrict_setting_screen";
     private final String GOT_IT_KEY = "got_it";
+    private final String CL_PWD_KEY = "cl_pwd";
 
     private SharedPreferences mSharedPreferences;
     private SharedPreferences.Editor mEditor;
@@ -84,5 +88,41 @@ public class SettingManager{
         mEditor.commit();
     }
 
+
+    public String getCL_Credential(){
+        return mSharedPreferences.getString(CL_CREDENTIAL_KEY, "");
+    }
+
+    public void setCL_Credential(String credential){
+        mEditor.putString(CL_CREDENTIAL_KEY,credential);
+        mEditor.commit();
+    }
+
+    public String getCL_SerialNo(){
+        return mSharedPreferences.getString(CL_SERIAL_NO_KEY, "");
+    }
+
+    public void setCL_SerialNo(String serialNo){
+        mEditor.putString(CL_SERIAL_NO_KEY,serialNo);
+        mEditor.commit();
+    }
+
+    public String getAccessToken(){
+        return mSharedPreferences.getString(CL_ACCESS_TOKEN_KEY, "");
+    }
+
+    public void setAccessToken(String token){
+        mEditor.putString(CL_ACCESS_TOKEN_KEY,token);
+        mEditor.commit();
+    }
+
+    public String getAccessTokenExpireTime(){
+        return mSharedPreferences.getString(CL_ACCESS_TOKEN_EXPIRE_KEY, "");
+    }
+
+    public void setAccessTokenExpireTime(String time){
+        mEditor.putString(CL_ACCESS_TOKEN_EXPIRE_KEY,time);
+        mEditor.commit();
+    }
 
 }

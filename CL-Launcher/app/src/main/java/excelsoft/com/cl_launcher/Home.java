@@ -22,7 +22,7 @@ package excelsoft.com.cl_launcher;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.ActivityManager;
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.WallpaperManager;
 import android.app.admin.DevicePolicyManager;
@@ -45,14 +45,14 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.Xml;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -68,7 +68,6 @@ import android.view.animation.LayoutAnimationController;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -76,23 +75,30 @@ import android.widget.TextView;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import adapter.AppInfoAdapter;
+import apihandler.ApiClient;
+import apihandler.ApiInterface;
+import apihandler.NetworkStatus;
 import bagroundservice.AppUsageAlarmReceiver;
 import bagroundservice.LocationFetchingService;
 import device_admin_utill.CLDeviceManger;
+import model.AppInfoModel;
 import preference_manger.SettingManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import util.Constants;
 import util.LogUtil;
 import util.UStats;
@@ -132,7 +138,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private static final int MAX_RECENT_TASKS = 20;
 
     private static boolean mWallpaperChecked;
-    private static ArrayList<ApplicationInfo> mApplications;
+    private static ArrayList<ApplicationInfo> mApplicationsList = new ArrayList<>();
     private static LinkedList<ApplicationInfo> mFavorites;
     private static boolean isSettingClick = false;
     private static boolean isExitClick;
@@ -140,7 +146,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private final BroadcastReceiver mWallpaperReceiver = new WallpaperIntentReceiver();
     private final BroadcastReceiver mApplicationsReceiver = new ApplicationsIntentReceiver();
 
-    private GridView mGrid;
+   /* private GridView mGrid;
+    private ApplicationsAdapter applicationsAdapter;*/
 
     private LayoutAnimationController mShowLayoutAnimation;
     private LayoutAnimationController mHideLayoutAnimation;
@@ -169,6 +176,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
     AppUsageAlarmReceiver mAppUsageAlarmReceiver;
     private boolean grantedAllPermission = false;
     private SettingManager settingManager;
+    private ApiInterface apiService;
+    private ProgressDialog loadingDialog;
+    private AppInfoAdapter appInfoAdapter;
+    private ArrayList<AppInfoModel> appInfoList = new ArrayList<>();
+    private RecyclerView mRcRecyclerView;
+    private GridLayoutManager lLayout;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -187,11 +200,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
         menuImg = (ImageView) findViewById(R.id.img_context_menu);
         exitImg = (ImageView) findViewById(R.id.img_exit_menu);
         refreshImg = (ImageView) findViewById(R.id.img_refresh_menu);
+        loadingDialog = new ProgressDialog(this);
 
         menuImg.setOnClickListener(this);
         exitImg.setOnClickListener(this);
         refreshImg.setOnClickListener(this);
         settingManager = SettingManager.getInstance(this);
+        apiService = ApiClient.getClient().create(ApiInterface.class);
     }
 
 
@@ -200,14 +215,15 @@ public class Home extends BaseActivity implements View.OnClickListener{
         registerIntentReceivers();
         //  setDefaultWallpaper();
         requestAllPermission();
-        loadApplications(true);
+      //  loadApplications(true);
         bindApplications();
-        bindFavorites(true);
-        bindRecents();
-        bindButtons();
+       // bindFavorites(true);
+       // bindRecents();
+      //  bindButtons();
         popupSetup();
         mGridEntry = AnimationUtils.loadAnimation(this, R.anim.grid_entry);
         mGridExit = AnimationUtils.loadAnimation(this, R.anim.grid_exit);
+        initDeviceRegistrationProcess();
     }
 
 
@@ -310,9 +326,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
         // Remove the callback for the cached drawables or we leak
         // the previous Home screen on orientation change
-        final int count = mApplications.size();
+        final int count = mApplicationsList.size();
         for (int i = 0; i < count; i++) {
-            mApplications.get(i).icon.setCallback(null);
+            mApplicationsList.get(i).icon.setCallback(null);
         }
 
         unregisterReceiver(mWallpaperReceiver);
@@ -342,7 +358,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onResume() {
         super.onResume();
-        bindRecents();
+      //  bindRecents();
         registerReceiver(mScreenStateReceiver, screenStateFilter);
         Log.i(TAG,"onResume called");
     }
@@ -359,7 +375,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(KEY_SAVE_GRID_OPENED, mGrid.getVisibility() == View.VISIBLE);
+        outState.putBoolean(KEY_SAVE_GRID_OPENED, mRcRecyclerView.getVisibility() == View.VISIBLE);
     }
 
     /**
@@ -382,11 +398,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
      * Creates a new appplications adapter for the grid view and registers it.
      */
     private void bindApplications() {
-        if (mGrid == null) {
-            mGrid = (GridView) findViewById(R.id.all_apps);
+        if (mRcRecyclerView == null) {
+            mRcRecyclerView = (RecyclerView) findViewById(R.id.all_apps);
         }
-        mGrid.setAdapter(new ApplicationsAdapter(this, mApplications));
-        mGrid.setSelection(0);
+        lLayout = new GridLayoutManager(this, 4);
+        mRcRecyclerView.setHasFixedSize(true);
+        mRcRecyclerView.setLayoutManager(lLayout);
+        appInfoAdapter = new AppInfoAdapter(this, appInfoList);
+        mRcRecyclerView.setAdapter(appInfoAdapter);
         showApplications(true);
        /* if (mApplicationsStack == null) {
             mApplicationsStack = (ApplicationsStackLayout) findViewById(R.id.faves_and_recents);
@@ -401,7 +420,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         mShowApplications.setOnClickListener(new ShowApplications());
         mShowApplicationsCheck = (CheckBox) findViewById(R.id.show_all_apps_check);*/
 
-        mGrid.setOnItemClickListener(new ApplicationLauncher());
+      //  mGrid.setOnItemClickListener(new ApplicationLauncher());
     }
 
     /**
@@ -431,7 +450,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
      * Refreshes the favorite applications stacked over the all apps button.
      * The number of favorites depends on the user.
      */
-    private void bindFavorites(boolean isLaunching) {
+   /* private void bindFavorites(boolean isLaunching) {
         if (!isLaunching || mFavorites == null) {
 
             if (mFavorites == null) {
@@ -494,7 +513,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         }
 
         //mApplicationsStack.setFavorites(mFavorites);
-    }
+    }*/
 
     private static void beginDocument(XmlPullParser parser, String firstElementName)
             throws XmlPullParserException, IOException {
@@ -527,7 +546,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
      * Refreshes the recently launched applications stacked over the favorites. The number
      * of recents depends on how many favorites are present.
      */
-    private void bindRecents() {
+   /* private void bindRecents() {
         final PackageManager manager = getPackageManager();
         final ActivityManager tasksManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         final List<ActivityManager.RecentTaskInfo> recentTasks = tasksManager.getRecentTasks(
@@ -553,7 +572,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         }
 
         // mApplicationsStack.setRecents(recents);
-    }
+    }*/
 
     private static ApplicationInfo getApplicationInfo(PackageManager manager, Intent intent) {
         final ResolveInfo resolveInfo = manager.resolveActivity(intent, 0);
@@ -598,7 +617,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 case KeyEvent.KEYCODE_BACK:
                     if (!event.isCanceled()) {
                         // Do BACK behavior.
-                        if (mGrid.getVisibility() == View.VISIBLE) {
+                        if (mRcRecyclerView.getVisibility() == View.VISIBLE) {
                             hideApplications();
                         }
                     }
@@ -653,13 +672,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
     /**
-     * Loads the list of installed applications in mApplications.
+     * Loads the list of installed applications in mApplicationsList.
      */
-    private void loadApplications(boolean isLaunching) {
-        if (isLaunching && mApplications != null) {
+    private void loadApplications() {
+      /* if (!isLaunching && mApplicationsList != null) {
             return;
         }
-
+*/
         PackageManager manager = getPackageManager();
 
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
@@ -671,10 +690,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
         if (apps != null) {
             final int count = apps.size();
 
-            if (mApplications == null) {
-                mApplications = new ArrayList<ApplicationInfo>(count);
+            if (mApplicationsList == null) {
+                mApplicationsList = new ArrayList<ApplicationInfo>(count);
             }
-            mApplications.clear();
+            mApplicationsList.clear();
 
             for (int i = 0; i < count; i++) {
                 ApplicationInfo application = new ApplicationInfo();
@@ -688,7 +707,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
                                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
                 application.icon = info.activityInfo.loadIcon(manager);
 
-                mApplications.add(application);
+                mApplicationsList.add(application);
+               // applicationsAdapter.notifyDataSetChanged();
             }
         }
     }
@@ -720,7 +740,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
             //  mGrid.startAnimation(mGridEntry);
         }
 
-        mGrid.setVisibility(View.VISIBLE);
+        mRcRecyclerView.setVisibility(View.VISIBLE);
 
         if (!animate) {
             mBlockAnimation = false;
@@ -746,8 +766,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
         }
 
         mGridExit.setAnimationListener(new HideGrid());
-        mGrid.startAnimation(mGridExit);
-        mGrid.setVisibility(View.INVISIBLE);
+        mRcRecyclerView.startAnimation(mGridExit);
+        mRcRecyclerView.setVisibility(View.INVISIBLE);
         // mShowApplications.requestFocus();
 
         // This enables a layout animation; if you uncomment this code, you need to
@@ -768,7 +788,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 handleLauncherExit();
                 break;
             case R.id.img_refresh_menu:
-                Utils.showToast(Home.this,"Sync in progress...");
+                if(NetworkStatus.getInstance().isConnected(this)){
+                    Utils.showToast(Home.this,"Sync in progress...");
+                    doCallForRegistration();
+                }else{
+                    Utils.showToast(this,getResources().getString(R.string.network_error_text));
+                }
                 break;
 
             case R.id.menu_setting:
@@ -841,10 +866,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private class ApplicationsIntentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            loadApplications(false);
-            bindApplications();
-            bindRecents();
-            bindFavorites(false);
+          //  loadApplications();
+          //  bindApplications();
+          //  bindRecents();
+          //  bindFavorites(false);
         }
     }
 
@@ -860,7 +885,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            final ApplicationInfo info = mApplications.get(position);
+            final ApplicationInfo info = mApplicationsList.get(position);
 
             if (convertView == null) {
                 final LayoutInflater inflater = getLayoutInflater();
@@ -934,7 +959,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
      */
     private class ShowApplications implements View.OnClickListener {
         public void onClick(View v) {
-            if (mGrid.getVisibility() != View.VISIBLE) {
+            if (mRcRecyclerView.getVisibility() != View.VISIBLE) {
                 showApplications(true);
             } else {
                 hideApplications();
@@ -1343,4 +1368,168 @@ public class Home extends BaseActivity implements View.OnClickListener{
             manager.lockNow();
         }
     }
+
+
+    private void showDialog(){
+        if(loadingDialog!=null) {
+            loadingDialog.setMessage(getResources().getString(R.string.initializingTxt));
+            loadingDialog.setCancelable(false);
+            loadingDialog.show();
+        }
+    }
+
+
+    private void hideDialog(){
+        if(loadingDialog!=null&&loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+    }
+
+
+    private void doCallForRegistration()  {
+        showDialog();
+        String tabletSerialNo = Utils.getDeviceId(this);
+        String launcherVersion = Utils.getAppVersion(this);
+        String androidVersion = Utils.getAndroidVersion();
+        String cl_serial_no = "";
+
+        Call<JsonObject> call = apiService.registerTabletCall(tabletSerialNo,
+                launcherVersion,androidVersion,cl_serial_no);
+
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+
+                if(response.isSuccessful()&& response.code()==200){
+                    JsonObject jsonObject = response.body();
+                   if(jsonObject!=null){
+                        String cl_serial_number = jsonObject.get("cl_serial_number").getAsString();
+                        String credentials = jsonObject.get("credentials").getAsString();
+                        settingManager.setCL_SerialNo(cl_serial_number);
+                        settingManager.setCL_Credential(credentials);
+                        LogUtil.createLog(TAG,"cl_serial_number ::"+cl_serial_number+" credentials::"+credentials);
+                       doCallForAccessToken(credentials);
+                    }
+                }
+                hideDialog();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                LogUtil.createLog("onFailure","jsonObject ::"+call);
+                hideDialog();
+            }
+        });
+
+    }
+
+
+
+    private void doCallForAccessToken(String credential)  {
+        String authorizationHeader = "Basic "+credential;
+        Call<JsonObject> call = apiService.getAccessTokenCall(authorizationHeader,"client_credentials");
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+
+                if(response.isSuccessful()&& response.code()==200){
+                    JsonObject jsonObject = response.body();
+                    if(jsonObject!=null){
+                        String access_token = jsonObject.get("access_token").getAsString();
+                        String expireTime = jsonObject.get("expires_in").getAsString();
+                        String token_type = jsonObject.get("token_type").getAsString();
+                        settingManager.setAccessToken(access_token);
+                        settingManager.setAccessTokenExpireTime(expireTime);
+                        LogUtil.createLog(TAG,"access_token ::"+access_token+" expireTime::"+expireTime);
+
+                        doCallForManifest(access_token);
+                    }
+                }
+                hideDialog();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                LogUtil.createLog("onFailure","jsonObject ::"+call);
+                hideDialog();
+            }
+        });
+
+    }
+
+
+
+
+    private void doCallForManifest(String accessToken)  {
+        String authorizationHeader = "Bearer "+accessToken;
+        String cl_serial_number = settingManager.getCL_SerialNo();
+        Call<JsonObject> call = apiService.getManifestCall(authorizationHeader,cl_serial_number);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+
+                if(response.isSuccessful()&& response.code()==200){
+                    JsonObject jsonObject = response.body();
+                    if(jsonObject!=null){
+                       parseData(jsonObject);
+                    }
+
+                }
+                hideDialog();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                LogUtil.createLog("onFailure","jsonObject ::"+call);
+                hideDialog();
+            }
+        });
+
+    }
+
+
+
+    private void initDeviceRegistrationProcess(){
+       // if(settingManager.getCL_Credential().equals("")){
+            if(NetworkStatus.getInstance().isConnected(this)){
+               doCallForRegistration();
+            }else{
+                Utils.showToast(this,getResources().getString(R.string.network_error_text));
+            }
+       /* }else{
+            loadApplications();
+        }*/
+    }
+
+
+    private void parseData(JsonObject jsonObject){
+        try {
+            AppInfoModel model = null;
+            String version = jsonObject.get(Constants.KEY_VERSION).getAsString();
+            JsonArray apps = jsonObject.getAsJsonArray(Constants.KEY_APPS);
+            for (int i = 0; i < apps.size(); i++) {
+                JsonObject jsonAppObject = apps.get(i).getAsJsonObject();
+                model = new AppInfoModel();
+                model.setId(jsonAppObject.get(Constants.KEY_ID).getAsInt());
+                model.setApkName(jsonAppObject.get(Constants.KEY_APK_NAME).getAsString());
+                model.setFile(jsonAppObject.get(Constants.KEY_FILE).getAsString());
+                model.setTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
+                model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
+                model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
+                model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
+                model.setDownloaded(false);
+                model.setInstalled(false);
+                model.setIcon(getResources().getDrawable(R.drawable.ic_launcher));
+                model.setVersion(version);
+                appInfoList.add(model);
+                appInfoAdapter.notifyItemInserted(appInfoList.size()-1);
+            }
+
+        }catch (Exception e){
+
+        }
+    }
+
+
+
 }
