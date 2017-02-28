@@ -12,7 +12,6 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.text.TextUtils;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Toast;
 
@@ -135,7 +134,7 @@ public class Utils {
 
     public static void showToast(Context ctx,String msg){
         Toast toast = Toast.makeText(ctx, msg,Toast.LENGTH_SHORT);
-        toast.setGravity(Gravity.TOP,0,150);
+       // toast.setGravity(Gravity.TOP,0,150);
         toast.show();
     }
 
@@ -166,6 +165,13 @@ public class Utils {
         } else {
             // Do something else on failure
         }
+
+       /* File folder = new File(Constants.DATABASE_FILE_PATH);
+        boolean success = true;
+        if(folder.exists()){
+            folder.delete();
+        }
+        folder.mkdirs();*/
     }
 
 
@@ -198,5 +204,13 @@ public class Utils {
         Snackbar.make(anchor,msg,Snackbar.LENGTH_LONG).show();
     }
 
+
+
+    public static void installAPK(Context context,String apkFileName){
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.fromFile(new File(Constants.APK_PATH+"/"+apkFileName+".apk")), "application/vnd.android.package-archive");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+    }
 
 }

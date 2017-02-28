@@ -39,7 +39,8 @@
             android:name=".Home"
             android:launchMode="singleInstance"
             android:stateNotNeeded="true"
-            android:theme="@style/AppThemeTwo">
+            android:theme="@style/AppThemeTwo"
+            android:configChanges="orientation|layoutDirection|screenSize|keyboard|keyboardHidden">
 
             <!-- Use android:theme="@android:style/Theme.NoTitleBar.Fullscreen" for full screen -->
             <intent-filter>

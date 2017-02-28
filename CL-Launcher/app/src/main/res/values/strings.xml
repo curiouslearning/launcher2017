@@ -29,6 +29,7 @@
     <string name="device_lock_string">CL-Launcher need to access followings for device lock.</string>
     <string name="network_error_text">Please check your network connection.</string>
     <string name="initializingTxt">Initializing ...</string>
+    <string name="downloading_in_progress">Downloading is in progress.</string>
 
 
 </resources>

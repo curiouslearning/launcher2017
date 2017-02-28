@@ -126,8 +126,8 @@ public class BaseActivity extends Activity implements
     }
 
     /**
-     * Uses a {@link com.google.android.gms.location.LocationSettingsRequest.Builder} to build
-     * a {@link com.google.android.gms.location.LocationSettingsRequest} that is used for checking
+     * Uses a {@link LocationSettingsRequest.Builder} to build
+     * a {@link LocationSettingsRequest} that is used for checking
      * if a device has the needed location settings.
      */
     protected void buildLocationSettingsRequest() {
@@ -155,7 +155,7 @@ public class BaseActivity extends Activity implements
      * The callback invoked when
      * {@link com.google.android.gms.location.SettingsApi#checkLocationSettings(GoogleApiClient,
      * LocationSettingsRequest)} is called. Examines the
-     * {@link com.google.android.gms.location.LocationSettingsResult} object and determines if
+     * {@link LocationSettingsResult} object and determines if
      * location settings are adequate. If they are not, begins the process of presenting a location
      * settings dialog to the user.
      */

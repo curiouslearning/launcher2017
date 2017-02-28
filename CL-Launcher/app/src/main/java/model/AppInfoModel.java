@@ -21,6 +21,54 @@ public class AppInfoModel {
     @Expose
     private boolean isDownloaded;
 
+    @SerializedName("isInstalled")
+    @Expose
+    private boolean isInstalled;
+
+    @SerializedName("appFilePath")
+    @Expose
+    private String appFilePath;
+
+    @SerializedName("id")
+    @Expose
+    private Integer id;
+    @SerializedName("apkName")
+    @Expose
+    private String apkName;
+    @SerializedName("file")
+    @Expose
+    private String file;
+    @SerializedName("title")
+    @Expose
+    private String title;
+    @SerializedName("content_type")
+    @Expose
+    private String contentType;
+    @SerializedName("type")
+    @Expose
+    private String type;
+    @SerializedName("visible")
+    @Expose
+    private Integer visible;
+
+
+    public String getLocalPath() {
+        return localPath;
+    }
+
+    public void setLocalPath(String localPath) {
+        this.localPath = localPath;
+    }
+
+    @SerializedName("localPath")
+    @Expose
+    private String localPath;
+
+
+
+
+
+
     public String getAppFilePath() {
         return appFilePath;
     }
@@ -52,36 +100,6 @@ public class AppInfoModel {
     public void setVersion(String version) {
         this.version = version;
     }
-
-    @SerializedName("isInstalled")
-    @Expose
-    private boolean isInstalled;
-
-    @SerializedName("appFilePath")
-    @Expose
-    private String appFilePath;
-
-    @SerializedName("id")
-    @Expose
-    private Integer id;
-    @SerializedName("apkName")
-    @Expose
-    private String apkName;
-    @SerializedName("file")
-    @Expose
-    private String file;
-    @SerializedName("title")
-    @Expose
-    private String title;
-    @SerializedName("content_type")
-    @Expose
-    private String contentType;
-    @SerializedName("type")
-    @Expose
-    private String type;
-    @SerializedName("visible")
-    @Expose
-    private Integer visible;
 
     public Integer getId() {
         return id;
@@ -140,6 +158,13 @@ public class AppInfoModel {
     }
 
 
+    public Intent getIntent() {
+        return intent;
+    }
+
+    public void setIntent(Intent intent) {
+        this.intent = intent;
+    }
 
     /**
      * The intent used to start the application.
@@ -173,11 +198,12 @@ public class AppInfoModel {
      * @param className the class name of the component representing the intent
      * @param launchFlags the launch flags
      */
-    final void setActivity(ComponentName className, int launchFlags) {
+    public final Intent setActivity(ComponentName className, int launchFlags) {
         intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         intent.setComponent(className);
         intent.setFlags(launchFlags);
+        return  intent;
     }
 
     @Override

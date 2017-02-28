@@ -53,6 +53,25 @@ public class DBAdapter {
 
 
 
+	private static final String CREATE_TABLE_APP_INFO =
+			"create table AppInfo (_id integer primary key autoincrement, "
+					+ AppInfoTable.APP_ID+ " integer,"
+					+ AppInfoTable.APP_TITLE+ " TEXT,"
+					+ AppInfoTable.APP_PACKAGE_NAME+ " TEXT,"
+					+ AppInfoTable.APP_APK_DOWNLOAD_PATH+ " TEXT,"
+					+ AppInfoTable.APP_CONTENT_TYPE+ " TEXT,"
+					+ AppInfoTable.APP_TYPE+ " TEXT,"
+					+ AppInfoTable.APP_IS_VISIBLE+ " integer,"
+					+ AppInfoTable.APP_VERSION+ " TEXT,"
+					+ AppInfoTable.APP_IS_DOWNLOADED+ " TEXT,"
+					+ AppInfoTable.APP_IS_INSTALLED+ " TEXT,"
+					+ AppInfoTable.APP_APK_LOCAL_PATH+ " TEXT,"
+					+ AppInfoTable.SYNC_STATUS+ " TEXT,"
+					+ AppInfoTable.SYNC_TIME+ " TEXT" + ");";
+
+
+
+
 	private final Context context;
 	private DatabaseHelper DBHelper;
 	private SQLiteDatabase db;
@@ -84,6 +103,7 @@ public class DBAdapter {
 			db.execSQL(CREATE_TABLE_APP_USAGE_INFO);
 			db.execSQL(CREATE_TABLE_LOCATION_INFO);
 			db.execSQL(CREATE_TABLE_INFO);
+			db.execSQL(CREATE_TABLE_APP_INFO);
 		}
 
 		@Override

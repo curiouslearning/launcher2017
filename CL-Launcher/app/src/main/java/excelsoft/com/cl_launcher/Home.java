@@ -27,7 +27,6 @@ import android.app.SearchManager;
 import android.app.WallpaperManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -93,6 +92,8 @@ import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
 import bagroundservice.AppUsageAlarmReceiver;
 import bagroundservice.LocationFetchingService;
+import database.AppInfoTable;
+import database.DBAdapter;
 import device_admin_utill.CLDeviceManger;
 import model.AppInfoModel;
 import preference_manger.SettingManager;
@@ -182,6 +183,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private ArrayList<AppInfoModel> appInfoList = new ArrayList<>();
     private RecyclerView mRcRecyclerView;
     private GridLayoutManager lLayout;
+    private DBAdapter mDbAdapter;
+    private AppInfoTable mAppInfoTable;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -207,6 +210,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         refreshImg.setOnClickListener(this);
         settingManager = SettingManager.getInstance(this);
         apiService = ApiClient.getClient().create(ApiInterface.class);
+
     }
 
 
@@ -214,16 +218,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
         allWidgetInit();
         registerIntentReceivers();
         //  setDefaultWallpaper();
-        requestAllPermission();
-      //  loadApplications(true);
         bindApplications();
-       // bindFavorites(true);
-       // bindRecents();
-      //  bindButtons();
+        requestAllPermission();
+        // bindFavorites(true);
+        // bindRecents();
+        //  bindButtons();
         popupSetup();
         mGridEntry = AnimationUtils.loadAnimation(this, R.anim.grid_entry);
         mGridExit = AnimationUtils.loadAnimation(this, R.anim.grid_exit);
-        initDeviceRegistrationProcess();
     }
 
 
@@ -268,6 +270,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 LogUtil.createLog("Home","onRequestPermissionsResult granted");
                 Utils.createCLAPPDirectory();
                 preventStatusBarWithCheckingPermission();
+                openDBandLoadApp();
 
             } else {
 
@@ -300,14 +303,24 @@ public class Home extends BaseActivity implements View.OnClickListener{
             } else{
                 Utils.createCLAPPDirectory();
                 preventStatusBarWithCheckingPermission();
+                openDBandLoadApp();
             }
         }else{
             Utils.createCLAPPDirectory();
             preventStatusBarWithCheckingPermission();
-
+            openDBandLoadApp();
         }
 
 
+    }
+
+
+    private void openDBandLoadApp(){
+        mDbAdapter = new DBAdapter(this);
+        mDbAdapter.open();
+        mAppInfoTable = new AppInfoTable(this);
+        mAppInfoTable.open();
+        loadApplications();
     }
 
     @Override
@@ -342,6 +355,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
         unregisterReceiver(mScreenStateReceiver);
 
+
+        if(mAppInfoTable!=null)
+            mAppInfoTable.close();
+        if(mDbAdapter!=null)
+            mDbAdapter.close();
+
     }
 
 
@@ -358,7 +377,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onResume() {
         super.onResume();
-      //  bindRecents();
+        //  bindRecents();
         registerReceiver(mScreenStateReceiver, screenStateFilter);
         Log.i(TAG,"onResume called");
     }
@@ -420,7 +439,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         mShowApplications.setOnClickListener(new ShowApplications());
         mShowApplicationsCheck = (CheckBox) findViewById(R.id.show_all_apps_check);*/
 
-      //  mGrid.setOnItemClickListener(new ApplicationLauncher());
+        //  mGrid.setOnItemClickListener(new ApplicationLauncher());
     }
 
     /**
@@ -647,7 +666,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 .setAlphabeticShortcut(SearchManager.MENU_KEY);
         menu.add(0, MENU_SETTINGS, 0, R.string.menu_settings)
                 .setIcon(android.R.drawable.ic_menu_preferences)
-                .setIntent(new Intent(android.provider.Settings.ACTION_SETTINGS));
+                .setIntent(new Intent(Settings.ACTION_SETTINGS));
 
         return true;
     }
@@ -688,30 +707,17 @@ public class Home extends BaseActivity implements View.OnClickListener{
         Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
 
         if (apps != null) {
-            final int count = apps.size();
-
-            if (mApplicationsList == null) {
-                mApplicationsList = new ArrayList<ApplicationInfo>(count);
-            }
-            mApplicationsList.clear();
-
-            for (int i = 0; i < count; i++) {
-                ApplicationInfo application = new ApplicationInfo();
-                ResolveInfo info = apps.get(i);
-
-                application.title = info.loadLabel(manager);
-                application.setActivity(new ComponentName(
-                                info.activityInfo.applicationInfo.packageName,
-                                info.activityInfo.name),
-                        Intent.FLAG_ACTIVITY_NEW_TASK
-                                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                application.icon = info.activityInfo.loadIcon(manager);
-
-                mApplicationsList.add(application);
-               // applicationsAdapter.notifyDataSetChanged();
+            appInfoList = mAppInfoTable.getAppInfo(apps,manager);
+            if(!(appInfoList.size()>0)) {
+                initDeviceRegistrationProcess();
+            }else{
+              //  appInfoAdapter.notifyDataSetChanged();
+                appInfoAdapter.setDataList(appInfoList);
+                appInfoAdapter.notifyDataSetChanged();
             }
         }
     }
+
 
     /**
      * Shows all of the applications by playing an animation on the grid.
@@ -788,12 +794,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 handleLauncherExit();
                 break;
             case R.id.img_refresh_menu:
-                if(NetworkStatus.getInstance().isConnected(this)){
+                //if(NetworkStatus.getInstance().isConnected(this)){
                     Utils.showToast(Home.this,"Sync in progress...");
-                    doCallForRegistration();
+                 /*   doCallForRegistration();
                 }else{
                     Utils.showToast(this,getResources().getString(R.string.network_error_text));
-                }
+                }*/
                 break;
 
             case R.id.menu_setting:
@@ -866,10 +872,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private class ApplicationsIntentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-          //  loadApplications();
-          //  bindApplications();
-          //  bindRecents();
-          //  bindFavorites(false);
+              loadApplications();
+            //  bindApplications();
+            //  bindRecents();
+            //  bindFavorites(false);
         }
     }
 
@@ -1402,13 +1408,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                 if(response.isSuccessful()&& response.code()==200){
                     JsonObject jsonObject = response.body();
-                   if(jsonObject!=null){
+                    if(jsonObject!=null){
                         String cl_serial_number = jsonObject.get("cl_serial_number").getAsString();
                         String credentials = jsonObject.get("credentials").getAsString();
                         settingManager.setCL_SerialNo(cl_serial_number);
                         settingManager.setCL_Credential(credentials);
                         LogUtil.createLog(TAG,"cl_serial_number ::"+cl_serial_number+" credentials::"+credentials);
-                       doCallForAccessToken(credentials);
+                        doCallForAccessToken(credentials);
                     }
                 }
                 hideDialog();
@@ -1471,7 +1477,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 if(response.isSuccessful()&& response.code()==200){
                     JsonObject jsonObject = response.body();
                     if(jsonObject!=null){
-                       parseData(jsonObject);
+                        parseData(jsonObject);
+                        loadApplications();
                     }
 
                 }
@@ -1490,12 +1497,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
     private void initDeviceRegistrationProcess(){
-       // if(settingManager.getCL_Credential().equals("")){
-            if(NetworkStatus.getInstance().isConnected(this)){
-               doCallForRegistration();
-            }else{
-                Utils.showToast(this,getResources().getString(R.string.network_error_text));
-            }
+        // if(settingManager.getCL_Credential().equals("")){
+        if(NetworkStatus.getInstance().isConnected(this)){
+            doCallForRegistration();
+        }else{
+            Utils.showToast(this,getResources().getString(R.string.network_error_text));
+        }
        /* }else{
             loadApplications();
         }*/
@@ -1512,17 +1519,16 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model = new AppInfoModel();
                 model.setId(jsonAppObject.get(Constants.KEY_ID).getAsInt());
                 model.setApkName(jsonAppObject.get(Constants.KEY_APK_NAME).getAsString());
-                model.setFile(jsonAppObject.get(Constants.KEY_FILE).getAsString());
+                model.setAppFilePath(jsonAppObject.get(Constants.KEY_FILE).getAsString());
                 model.setTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
                 model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
                 model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
                 model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
                 model.setDownloaded(false);
                 model.setInstalled(false);
-                model.setIcon(getResources().getDrawable(R.drawable.ic_launcher));
+                model.setIcon(getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
                 model.setVersion(version);
-                appInfoList.add(model);
-                appInfoAdapter.notifyItemInserted(appInfoList.size()-1);
+                mAppInfoTable.insertAppInfo(model);
             }
 
         }catch (Exception e){
@@ -1531,5 +1537,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
 
+    public boolean updateDownloadInfo(int id,boolean status){
+      return  mAppInfoTable.updateAppDownLoadInfo(id,status);
+    }
 
 }
