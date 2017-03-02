@@ -1,4 +1,4 @@
-package bagroundservice;
+package backgroundservice;
 
 import android.Manifest;
 import android.app.Service;

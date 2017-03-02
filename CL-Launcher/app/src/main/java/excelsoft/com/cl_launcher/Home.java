@@ -42,12 +42,14 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.provider.Settings;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -90,8 +92,8 @@ import adapter.AppInfoAdapter;
 import apihandler.ApiClient;
 import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
-import bagroundservice.AppUsageAlarmReceiver;
-import bagroundservice.LocationFetchingService;
+import backgroundservice.AppUsageAlarmReceiver;
+import backgroundservice.LocationFetchingService;
 import database.AppInfoTable;
 import database.DBAdapter;
 import device_admin_utill.CLDeviceManger;
@@ -101,6 +103,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import util.Constants;
+import util.GridSpacingItemDecoration;
 import util.LogUtil;
 import util.UStats;
 import util.Utils;
@@ -185,6 +188,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private GridLayoutManager lLayout;
     private DBAdapter mDbAdapter;
     private AppInfoTable mAppInfoTable;
+    private int initialAppInfoCountFromDb = 0;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -420,9 +424,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
         if (mRcRecyclerView == null) {
             mRcRecyclerView = (RecyclerView) findViewById(R.id.all_apps);
         }
-        lLayout = new GridLayoutManager(this, 4);
-        mRcRecyclerView.setHasFixedSize(true);
+        int spanCount = Utils.calculateNoOfColumns(this);
+        lLayout = new GridLayoutManager(this,spanCount );
         mRcRecyclerView.setLayoutManager(lLayout);
+        mRcRecyclerView.addItemDecoration(new GridSpacingItemDecoration(spanCount, Utils.dpToPx(this,10), true));
+        mRcRecyclerView.setItemAnimator(new DefaultItemAnimator());
         appInfoAdapter = new AppInfoAdapter(this, appInfoList);
         mRcRecyclerView.setAdapter(appInfoAdapter);
         showApplications(true);
@@ -711,7 +717,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
             if(!(appInfoList.size()>0)) {
                 initDeviceRegistrationProcess();
             }else{
-              //  appInfoAdapter.notifyDataSetChanged();
+                //  appInfoAdapter.notifyDataSetChanged();
                 appInfoAdapter.setDataList(appInfoList);
                 appInfoAdapter.notifyDataSetChanged();
             }
@@ -794,12 +800,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 handleLauncherExit();
                 break;
             case R.id.img_refresh_menu:
-                //if(NetworkStatus.getInstance().isConnected(this)){
+                if(NetworkStatus.getInstance().isConnected(this)){
                     Utils.showToast(Home.this,"Sync in progress...");
-                 /*   doCallForRegistration();
+                    doCallForManifest(settingManager.getAccessToken());
                 }else{
                     Utils.showToast(this,getResources().getString(R.string.network_error_text));
-                }*/
+                }
                 break;
 
             case R.id.menu_setting:
@@ -872,7 +878,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private class ApplicationsIntentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-              loadApplications();
+            loadApplications();
             //  bindApplications();
             //  bindRecents();
             //  bindFavorites(false);
@@ -1432,6 +1438,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
     private void doCallForAccessToken(String credential)  {
+        showDialog();
         String authorizationHeader = "Basic "+credential;
         Call<JsonObject> call = apiService.getAccessTokenCall(authorizationHeader,"client_credentials");
         call.enqueue(new Callback<JsonObject>() {
@@ -1467,6 +1474,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
     private void doCallForManifest(String accessToken)  {
+        showDialog();
+        initialAppInfoCountFromDb = mAppInfoTable.getCount();
         String authorizationHeader = "Bearer "+accessToken;
         String cl_serial_number = settingManager.getCL_SerialNo();
         Call<JsonObject> call = apiService.getManifestCall(authorizationHeader,cl_serial_number);
@@ -1478,17 +1487,18 @@ public class Home extends BaseActivity implements View.OnClickListener{
                     JsonObject jsonObject = response.body();
                     if(jsonObject!=null){
                         parseData(jsonObject);
-                        loadApplications();
                     }
 
                 }
-                hideDialog();
+
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 LogUtil.createLog("onFailure","jsonObject ::"+call);
                 hideDialog();
+                //If access token expire
+                doCallForAccessToken(settingManager.getCL_Credential());
             }
         });
 
@@ -1497,15 +1507,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
     private void initDeviceRegistrationProcess(){
-        // if(settingManager.getCL_Credential().equals("")){
         if(NetworkStatus.getInstance().isConnected(this)){
             doCallForRegistration();
         }else{
             Utils.showToast(this,getResources().getString(R.string.network_error_text));
         }
-       /* }else{
-            loadApplications();
-        }*/
     }
 
 
@@ -1519,7 +1525,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model = new AppInfoModel();
                 model.setId(jsonAppObject.get(Constants.KEY_ID).getAsInt());
                 model.setApkName(jsonAppObject.get(Constants.KEY_APK_NAME).getAsString());
-                model.setAppFilePath(jsonAppObject.get(Constants.KEY_FILE).getAsString());
+                model.setAppPckageName(jsonAppObject.get(Constants.KEY_FILE).getAsString());
                 model.setTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
                 model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
                 model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
@@ -1528,7 +1534,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model.setInstalled(false);
                 model.setIcon(getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
                 model.setVersion(version);
-                mAppInfoTable.insertAppInfo(model);
+                doInsertUpdateProcess(model);
             }
 
         }catch (Exception e){
@@ -1537,8 +1543,45 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
 
+    private void doInsertUpdateProcess(final AppInfoModel model){
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                //showDialog();
+            }
+
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getId(),model.getAppPckageName()))){
+                    String oldAppVersion = mAppInfoTable.getVersionNo(model.getId(),model.getAppPckageName());
+                    if(!model.getVersion().equals(oldAppVersion)){
+                        model.setIsUpdateVersionExist(1);
+                        mAppInfoTable.updateAppInfo(model);
+                    }
+                }else{
+                    mAppInfoTable.insertAppInfo(model);
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+                loadApplications();
+                hideDialog();
+            }
+        }.execute();
+
+
+    }
+
+
+
     public boolean updateDownloadInfo(int id,boolean status){
-      return  mAppInfoTable.updateAppDownLoadInfo(id,status);
+        return  mAppInfoTable.updateAppDownLoadInfo(id,status);
     }
 
 }

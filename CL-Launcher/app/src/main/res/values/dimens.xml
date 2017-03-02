@@ -2,9 +2,9 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="home_padding">10dp</dimen>
+    <dimen name="home_padding">20dp</dimen>
 
-    <dimen name="header_height">80dp</dimen>
+    <dimen name="header_height">65dp</dimen>
     <dimen name="header_txt_left_margin">10dp</dimen>
 
     <integer name="popup_height">80</integer>
@@ -12,4 +12,9 @@
 
     <dimen name="righthand_popup_y_pos">80dp</dimen>
     <dimen name="option_item_text_size">20sp</dimen>
+
+    <dimen name="card_margin">5dp</dimen>
+    <dimen name="card_radius">0dp</dimen>
+    <dimen name="icon_height">90dp</dimen>
+    <dimen name="lebel_botttom_margin">10dp</dimen>
 </resources>

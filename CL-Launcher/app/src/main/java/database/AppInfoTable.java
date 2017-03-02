@@ -19,6 +19,7 @@ import model.AppInfoModel;
 import util.Constants;
 import util.LogUtil;
 
+import static android.R.attr.id;
 import static database.DBAdapter.DATABASE_NAME;
 import static database.DBAdapter.DATABASE_VERSION;
 
@@ -43,6 +44,7 @@ public class AppInfoTable {
     public static final String APP_APK_LOCAL_PATH = "appLocalPath";
     public static final String SYNC_STATUS = "sync_status";
     public static final String SYNC_TIME = "sync_time";
+    public static final String AVAILABLE_UPDATE_VERSION = "updateVersion";
 
     private final String  TAG = "AppInfoTable";
 
@@ -121,7 +123,7 @@ public class AppInfoTable {
         ContentValues initialValues = new ContentValues();
         initialValues.put(APP_ID, info.getId());
         initialValues.put(APP_TITLE, info.getTitle());
-        initialValues.put(APP_PACKAGE_NAME, info.getAppFilePath());
+        initialValues.put(APP_PACKAGE_NAME, info.getAppPckageName());
         initialValues.put(APP_APK_DOWNLOAD_PATH, info.getApkName());
         initialValues.put(APP_CONTENT_TYPE, info.getContentType());
         initialValues.put(APP_TYPE, info.getType());
@@ -132,9 +134,31 @@ public class AppInfoTable {
         initialValues.put(APP_APK_LOCAL_PATH, info.getLocalPath());
         initialValues.put(SYNC_STATUS,"");
         initialValues.put(SYNC_TIME,"");
+        initialValues.put(AVAILABLE_UPDATE_VERSION,info.getIsUpdateVersionExist());
         return this.mDb.insert(APP_INFO_TABLE, null, initialValues);
     }
 
+
+    public boolean updateAppInfo(AppInfoModel info){
+
+        System.out.println("updating data into  data base...");
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(APP_ID, info.getId());
+        initialValues.put(APP_TITLE, info.getTitle());
+        initialValues.put(APP_PACKAGE_NAME, info.getAppPckageName());
+        initialValues.put(APP_APK_DOWNLOAD_PATH, info.getApkName());
+        initialValues.put(APP_CONTENT_TYPE, info.getContentType());
+        initialValues.put(APP_TYPE, info.getType());
+        initialValues.put(APP_IS_VISIBLE, info.getVisible());
+        initialValues.put(APP_VERSION, info.getVersion());
+        initialValues.put(APP_IS_DOWNLOADED, ""+info.isDownloaded());
+        initialValues.put(APP_IS_INSTALLED, ""+info.isInstalled());
+        initialValues.put(APP_APK_LOCAL_PATH, info.getLocalPath());
+        initialValues.put(SYNC_STATUS,"");
+        initialValues.put(SYNC_TIME,"");
+        initialValues.put(AVAILABLE_UPDATE_VERSION,info.getIsUpdateVersionExist());
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
+    }
 
     public boolean updateAppInstallationInfo(int id,boolean installStatus){
 
@@ -143,6 +167,8 @@ public class AppInfoTable {
         initialValues.put(APP_IS_INSTALLED, ""+installStatus);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
     }
+
+
 
 
     public boolean updateAppDownLoadInfo(int id,boolean downloadStatus){
@@ -166,7 +192,7 @@ public class AppInfoTable {
                 info = new AppInfoModel();
                 info.setId(cur.getInt(1));
                 info.setTitle(cur.getString(2));
-                info.setAppFilePath(cur.getString(3));
+                info.setAppPckageName(cur.getString(3));
                 info.setApkName(cur.getString(4));
                 info.setContentType(cur.getString(5));
                 info.setType(cur.getString(6));
@@ -175,6 +201,7 @@ public class AppInfoTable {
                 info.setDownloaded(Boolean.parseBoolean(cur.getString(9)));
                 info.setInstalled(Boolean.parseBoolean(cur.getString(10)));
                 info.setLocalPath(cur.getString(11));
+                info.setIsUpdateVersionExist(cur.getInt(12));
                 filterApps(apps,info,manager);
                 appInfoList.add(info);
             }while(cur.moveToNext());
@@ -189,7 +216,7 @@ public class AppInfoTable {
 
         for (int i = 0; i < apps.size(); i++) {
             ResolveInfo info = apps.get(i);
-            if (model.getAppFilePath().
+            if (model.getAppPckageName().
                     equals(info.activityInfo.applicationInfo.packageName)) {
                 model.setTitle(info.loadLabel(manager).toString());
                 model.setIntent(model.setActivity(new ComponentName(
@@ -237,4 +264,41 @@ public class AppInfoTable {
         return c;
 
     }
+
+
+    // Getting  Count
+    public boolean isExist(int appId,String pckgId) {
+        String countQuery  = "SELECT * FROM " + APP_INFO_TABLE+" WHERE "+APP_ID+" = '"+appId+"' AND "+APP_PACKAGE_NAME+" = '"+pckgId+"'";
+        System.out.println("countQuery......"+countQuery);
+        Cursor cursor = this.mDb.rawQuery(countQuery, null);
+        int c = cursor.getCount();
+        cursor.close();
+        // return count
+        if(c==0){
+            return false;
+        }else{
+            return true;
+        }
+
+    }
+
+
+    // Getting  Count
+    public String getVersionNo(int appId,String pckgId) {
+        String versionNo = "";
+        String countQuery  = "SELECT appVersion FROM " + APP_INFO_TABLE+" WHERE "+APP_ID+" = '"+appId+"' AND "+APP_PACKAGE_NAME+" = '"+pckgId+"'";
+        System.out.println("countQuery......"+countQuery);
+        Cursor cur = this.mDb.rawQuery(countQuery, null);
+        if(cur.moveToFirst()){
+            do{
+                versionNo = cur.getString(0);
+            }while(cur.moveToNext());
+        }
+        cur.close();
+        // return count
+        return versionNo;
+
+    }
+
+
 }

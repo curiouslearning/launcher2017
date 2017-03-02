@@ -1,4 +1,4 @@
-package bagroundservice;
+package backgroundservice;
 
 import android.app.IntentService;
 import android.content.Intent;

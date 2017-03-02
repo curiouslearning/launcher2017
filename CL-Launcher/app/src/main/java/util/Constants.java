@@ -10,7 +10,7 @@ import java.io.File;
 
 public class Constants {
     public static final String  DATABASE_FILE_PATH =
-            Environment.getExternalStorageDirectory().getAbsolutePath()+"/CL-APP";
+            Environment.getExternalStorageDirectory().getAbsolutePath()+"/Android/data/excelsoft.com.cl_launcher/CL-DB";
 
     public static final String  APK_PATH =
             DATABASE_FILE_PATH+ File.separator+"APK";

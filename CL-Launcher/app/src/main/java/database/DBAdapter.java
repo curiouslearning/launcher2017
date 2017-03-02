@@ -66,6 +66,7 @@ public class DBAdapter {
 					+ AppInfoTable.APP_IS_DOWNLOADED+ " TEXT,"
 					+ AppInfoTable.APP_IS_INSTALLED+ " TEXT,"
 					+ AppInfoTable.APP_APK_LOCAL_PATH+ " TEXT,"
+					+ AppInfoTable.AVAILABLE_UPDATE_VERSION+ " integer,"
 					+ AppInfoTable.SYNC_STATUS+ " TEXT,"
 					+ AppInfoTable.SYNC_TIME+ " TEXT" + ");";
 

@@ -25,13 +25,14 @@ public class AppInfoModel {
     @Expose
     private boolean isInstalled;
 
-    @SerializedName("appFilePath")
+    @SerializedName("appPckageName")
     @Expose
-    private String appFilePath;
+    private String appPckageName;
 
     @SerializedName("id")
     @Expose
     private Integer id;
+
     @SerializedName("apkName")
     @Expose
     private String apkName;
@@ -51,6 +52,18 @@ public class AppInfoModel {
     @Expose
     private Integer visible;
 
+    public Integer getIsUpdateVersionExist() {
+        return isUpdateVersionExist;
+    }
+
+    public void setIsUpdateVersionExist(Integer isUpdateVersionExist) {
+        this.isUpdateVersionExist = isUpdateVersionExist;
+    }
+
+    @SerializedName("isUpdateVersionExist")
+    @Expose
+    private Integer isUpdateVersionExist;
+
 
     public String getLocalPath() {
         return localPath;
@@ -69,12 +82,12 @@ public class AppInfoModel {
 
 
 
-    public String getAppFilePath() {
-        return appFilePath;
+    public String getAppPckageName() {
+        return appPckageName;
     }
 
-    public void setAppFilePath(String appFilePath) {
-        this.appFilePath = appFilePath;
+    public void setAppPckageName(String appPckageName) {
+        this.appPckageName = appPckageName;
     }
 
     public boolean isDownloaded() {

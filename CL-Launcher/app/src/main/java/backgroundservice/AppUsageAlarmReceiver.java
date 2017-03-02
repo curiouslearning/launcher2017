@@ -1,4 +1,4 @@
-package bagroundservice;
+package backgroundservice;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;

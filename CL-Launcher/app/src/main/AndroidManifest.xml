@@ -45,7 +45,6 @@
             <!-- Use android:theme="@android:style/Theme.NoTitleBar.Fullscreen" for full screen -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
@@ -61,9 +60,17 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="bagroundservice.AppUsageAlarmReceiver" />
         <receiver
-            android:name="bagroundservice.AppBootReceiver"
+            android:name="backgroundservice.InAppDatacollectionReciever"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="excelsoft.com.cl_launcher.IN_APP_SECTION" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="backgroundservice.AppUsageAlarmReceiver" />
+        <receiver
+            android:name="backgroundservice.AppBootReceiver"
             android:enabled="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -80,9 +87,9 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
-        <service android:name="bagroundservice.AppUsageSchedulingService" />
+        <service android:name="backgroundservice.AppUsageSchedulingService" />
         <service
-            android:name="bagroundservice.LocationFetchingService"
+            android:name="backgroundservice.LocationFetchingService"
             android:exported="false" />
 
         <activity

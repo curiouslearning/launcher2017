@@ -104,8 +104,9 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
                 }else {
                     if(model.isDownloaded()){
                         Utils.installAPK(context,model.getTitle());
+                    }else {
+                        Utils.showToast(context, context.getResources().getString(R.string.downloading_in_progress));
                     }
-                    Utils.showToast(context, context.getResources().getString(R.string.downloading_in_progress));
                 }
             }
         });

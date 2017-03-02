@@ -60,6 +60,7 @@
         android:layout_height="0dip"
         android:layout_width="match_parent"
         android:stackFromBottom="false"
+        android:clipToPadding="false"
         android:visibility="visible"/>
 
   <!--  &lt;!&ndash; Favorites and Recents &ndash;&gt;
