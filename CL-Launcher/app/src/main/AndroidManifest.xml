@@ -34,20 +34,34 @@
         <activity
             android:name=".SplashActivity"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Translucent" />
+            android:theme="@android:style/Theme.Translucent"
+            />
         <activity
             android:name=".Home"
-            android:launchMode="singleInstance"
+            android:clearTaskOnLaunch="true"
+            android:launchMode="singleTask"
             android:stateNotNeeded="true"
             android:theme="@style/AppThemeTwo"
-            android:configChanges="orientation|layoutDirection|screenSize|keyboard|keyboardHidden">
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
 
             <!-- Use android:theme="@android:style/Theme.NoTitleBar.Fullscreen" for full screen -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.android.systemui.action_assist_icon"
+                android:resource="@mipmap/ic_launcher" />
         </activity>
         <activity
             android:name=".Wallpaper"
@@ -55,23 +69,20 @@
             android:label="Wallpaper">
             <intent-filter>
                 <action android:name="android.intent.action.SET_WALLPAPER" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name="backgroundservice.InAppDatacollectionReciever"
-            android:enabled="true">
+        <receiver android:name="backgroundservice.PackageRemoveReciever">
             <intent-filter>
-                <action android:name="excelsoft.com.cl_launcher.IN_APP_SECTION" />
+                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED"/>
+                <data android:scheme="package"/>
             </intent-filter>
         </receiver>
-
         <receiver android:name="backgroundservice.AppUsageAlarmReceiver" />
         <receiver
             android:name="backgroundservice.AppBootReceiver"
-            android:enabled="false">
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

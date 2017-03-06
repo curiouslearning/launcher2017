@@ -76,6 +76,10 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         if(model.isInstalled()) {
             holder.loader.setVisibility(View.GONE);
             holder.icon.setImageDrawable(model.getIcon());
+            if(model.getIsUpdateVersionExist()==1&&!model.isDownloaded()){
+                initDownLoad(model,position);
+            }
+
         }else{
 
             if(model.isDownloaded()) {
@@ -85,14 +89,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
 
                 holder.loader.setVisibility(View.VISIBLE);
                 holder.icon.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
-                String apkDownloadUrl = ApiConstant.APK_ENDPOINT_URL+settingManager.getCL_SerialNo()+ApiConstant.APK+
-                        model.getApkName();
-                //  DownloadAPKFileManger.getDownloadManager(context);
-                //  long downLoadID = DownloadAPKFileManger.startDownloadManager(context, apkDownloadUrl,model.getTitle(), Constants.APK_PATH);
-                int downloadId = startDownLoad(model.getId(),apkDownloadUrl,model.getTitle(),settingManager.getAccessToken());
-               // myDownloadStatusListener.setModel(model,position);
-                downLoadMap.put(downloadId,model);
-                downLoadMapPosition.put(downloadId,position);
+                initDownLoad(model,position);
             }
         }
 
@@ -100,7 +97,11 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             @Override
             public void onClick(View v) {
                 if(model.isInstalled()){
-                    context.startActivity(model.getIntent());
+                    if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE&&model.isDownloaded()){
+                        Utils.installAPK(context,model.getTitle());
+                    }else{
+                        context.startActivity(model.getIntent());
+                    }
                 }else {
                     if(model.isDownloaded()){
                         Utils.installAPK(context,model.getTitle());
@@ -207,6 +208,19 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             System.out.println("######## onProgress ###### "+id+" : "+totalBytes+" : "+downloadedBytes+" : "+progress);
 
         }
+    }
+
+
+
+    private void initDownLoad(AppInfoModel model,int position){
+        String apkDownloadUrl = ApiConstant.APK_ENDPOINT_URL+settingManager.getCL_SerialNo()+ApiConstant.APK+
+                model.getApkName();
+        //  DownloadAPKFileManger.getDownloadManager(context);
+        //  long downLoadID = DownloadAPKFileManger.startDownloadManager(context, apkDownloadUrl,model.getTitle(), Constants.APK_PATH);
+        int downloadId = startDownLoad(model.getId(),apkDownloadUrl,model.getTitle(),settingManager.getAccessToken());
+        // myDownloadStatusListener.setModel(model,position);
+        downLoadMap.put(downloadId,model);
+        downLoadMapPosition.put(downloadId,position);
     }
 
 }

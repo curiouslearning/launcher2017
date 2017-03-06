@@ -85,6 +85,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -93,6 +94,7 @@ import apihandler.ApiClient;
 import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
 import backgroundservice.AppUsageAlarmReceiver;
+import backgroundservice.InAppDataCollectionReceiver;
 import backgroundservice.LocationFetchingService;
 import database.AppInfoTable;
 import database.DBAdapter;
@@ -104,10 +106,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import util.Constants;
 import util.GridSpacingItemDecoration;
+import util.HomeKeyLocker;
 import util.LogUtil;
 import util.UStats;
 import util.Utils;
 
+import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static permission_manager.PermissionHandler.checkIfAlreadyhavePermission;
 import static permission_manager.PermissionHandler.requestForSpecificPermission;
 import static util.Utils.showToast;
@@ -131,6 +135,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private static final String TAG_PACKAGE = "package";
     private static final String TAG_CLASS = "class";
 
+
     // Identifiers for option menu items
     private static final int MENU_WALLPAPER_SETTINGS = Menu.FIRST + 1;
     private static final int MENU_SEARCH = MENU_WALLPAPER_SETTINGS + 1;
@@ -149,6 +154,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private final BroadcastReceiver mWallpaperReceiver = new WallpaperIntentReceiver();
     private final BroadcastReceiver mApplicationsReceiver = new ApplicationsIntentReceiver();
+    private final BroadcastReceiver mInAppDataCollectionReceiver = new InAppDataCollectionReceiver();
 
    /* private GridView mGrid;
     private ApplicationsAdapter applicationsAdapter;*/
@@ -189,6 +195,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private DBAdapter mDbAdapter;
     private AppInfoTable mAppInfoTable;
     private int initialAppInfoCountFromDb = 0;
+    private HashMap<String,AppInfoModel > packageMap = new HashMap<>();
+    private HomeKeyLocker mHomeKeyLocker;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -358,12 +366,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
             manager.removeView(view);
 
         unregisterReceiver(mScreenStateReceiver);
+        unregisterReceiver(mInAppDataCollectionReceiver);
 
 
         if(mAppInfoTable!=null)
             mAppInfoTable.close();
         if(mDbAdapter!=null)
             mDbAdapter.close();
+
 
     }
 
@@ -410,11 +420,15 @@ public class Home extends BaseActivity implements View.OnClickListener{
         IntentFilter filter = new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED);
         registerReceiver(mWallpaperReceiver, filter);
 
-        filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
-        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        filter = new IntentFilter(ACTION_PACKAGE_ADDED);
         filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
         filter.addDataScheme("package");
         registerReceiver(mApplicationsReceiver, filter);
+
+        filter = new IntentFilter();
+        filter.addAction(Constants.ACTION_IN_APP_RECORD_ONE);
+        filter.addAction(Constants.ACTION_IN_APP_RECORD_TWO);
+        registerReceiver(mInAppDataCollectionReceiver,filter);
     }
 
     /**
@@ -686,6 +700,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
             case MENU_SEARCH:
                 onSearchRequested();
                 return true;
+            case android.R.id.home:
+                return false;
         }
 
         return super.onOptionsItemSelected(item);
@@ -720,9 +736,17 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 //  appInfoAdapter.notifyDataSetChanged();
                 appInfoAdapter.setDataList(appInfoList);
                 appInfoAdapter.notifyDataSetChanged();
+                addDataIntoMap(appInfoList);
             }
         }
     }
+
+    private void addDataIntoMap(ArrayList<AppInfoModel> appInfoList) {
+        for (AppInfoModel model:appInfoList) {
+            packageMap.put(model.getAppPckageName(),model);
+        }
+    }
+
 
 
     /**
@@ -878,6 +902,17 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private class ApplicationsIntentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+                if(intent.getAction().equalsIgnoreCase(Intent.ACTION_PACKAGE_ADDED)){
+                    String added_package = intent.getData().toString().split(":")[1];
+                    LogUtil.createLog("added_package",added_package);
+                    LogUtil.createLog("alok","added_package ::"+added_package);
+
+                    if(packageMap.get(added_package)!=null && packageMap.get(added_package).getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE)
+                        mAppInfoTable.updateAppUpdateAvailableInfo(added_package,Constants.UPDATE_NOT_AVAILABLE);
+
+                }
+            }
             loadApplications();
             //  bindApplications();
             //  bindRecents();
@@ -1457,6 +1492,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                         doCallForManifest(access_token);
                     }
+                }else{
+                    doCallForRegistration();
                 }
                 hideDialog();
             }
@@ -1465,6 +1502,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 LogUtil.createLog("onFailure","jsonObject ::"+call);
                 hideDialog();
+                doCallForRegistration();
             }
         });
 
@@ -1489,6 +1527,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
                         parseData(jsonObject);
                     }
 
+                }else{
+                    doCallForAccessToken(settingManager.getCL_Credential());
                 }
 
             }
@@ -1557,10 +1597,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getId(),model.getAppPckageName()))){
                     String oldAppVersion = mAppInfoTable.getVersionNo(model.getId(),model.getAppPckageName());
                     if(!model.getVersion().equals(oldAppVersion)){
-                        model.setIsUpdateVersionExist(1);
+                        model.setIsUpdateVersionExist(Constants.UPDATE_AVAILABLE);
+                        model.setDownloaded(false);
                         mAppInfoTable.updateAppInfo(model);
                     }
+
                 }else{
+                    model.setIsUpdateVersionExist(Constants.UPDATE_NOT_AVAILABLE);
                     mAppInfoTable.insertAppInfo(model);
                 }
 

@@ -136,4 +136,9 @@ public class DBAdapter {
 		this.DBHelper.close();
 	}
 
+
+	public boolean isOpen(){
+		return this.db.isOpen();
+	}
+
 }

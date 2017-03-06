@@ -53,4 +53,13 @@ public class Constants {
     public static final String KEY_VISIBLE ="visible";
     public static final String KEY_APPS ="apps";
 
+    public static final int UPDATE_AVAILABLE = 1;
+    public static final int UPDATE_NOT_AVAILABLE = 0;
+
+    public static final int APP_VISIBLE = 1;
+    public static final int APP_NOT_VISIBLE = 0;
+
+    public static final String ACTION_IN_APP_RECORD_ONE = "org.curiouslearning.RECORD";
+    public static final String ACTION_IN_APP_RECORD_TWO = "edu.mit.media.funf.RECORD";
+
 }

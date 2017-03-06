@@ -15,7 +15,6 @@
         android:text="@string/setting"
         android:textColor="@color/black"
         android:drawablePadding="30dp"
-        android:background="@drawable/favorite_background"
         android:gravity="center_vertical"
         android:drawableLeft="@drawable/ic_action_setting"
         android:textSize="@dimen/option_item_text_size"/>
@@ -28,7 +27,6 @@
         android:text="@string/share_launcher"
         android:textColor="@color/black"
         android:drawablePadding="30dp"
-        android:background="@drawable/favorite_background"
         android:gravity="center_vertical"
         android:drawableLeft="@drawable/ic_action_share"
         android:textSize="@dimen/option_item_text_size"/>
@@ -38,7 +36,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/help"
-        android:background="@drawable/favorite_background"
         android:textColor="@color/black"
         android:drawablePadding="30dp"
         android:gravity="center_vertical"

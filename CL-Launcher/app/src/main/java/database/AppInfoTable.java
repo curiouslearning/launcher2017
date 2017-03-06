@@ -19,7 +19,6 @@ import model.AppInfoModel;
 import util.Constants;
 import util.LogUtil;
 
-import static android.R.attr.id;
 import static database.DBAdapter.DATABASE_NAME;
 import static database.DBAdapter.DATABASE_VERSION;
 
@@ -157,7 +156,7 @@ public class AppInfoTable {
         initialValues.put(SYNC_STATUS,"");
         initialValues.put(SYNC_TIME,"");
         initialValues.put(AVAILABLE_UPDATE_VERSION,info.getIsUpdateVersionExist());
-        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + info.getId(), null) >0;
     }
 
     public boolean updateAppInstallationInfo(int id,boolean installStatus){
@@ -168,6 +167,21 @@ public class AppInfoTable {
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
     }
 
+    public boolean updateAppUpdateAvailableInfo(String packageId,int status){
+
+        System.out.println("updating updateAppUpdateAvailableInfo into  data base..."+status);
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(AVAILABLE_UPDATE_VERSION, status);
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_PACKAGE_NAME + " = " + "?", new String[]{packageId}) >0;
+    }
+
+    public boolean updateAppVisibilityInfo(String packageId,int status){
+
+        System.out.println("updating updateAppVisibilityInfo into  data base..."+status);
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(APP_IS_VISIBLE, status);
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_PACKAGE_NAME + " = " + "?", new String[]{packageId}) >0;
+    }
 
 
 
@@ -183,7 +197,7 @@ public class AppInfoTable {
 
     public ArrayList<AppInfoModel> getAppInfo(List<ResolveInfo> apps, PackageManager manager) {
 
-        String selectQuery = "SELECT * FROM " + APP_INFO_TABLE;
+        String selectQuery = "SELECT * FROM " + APP_INFO_TABLE+" WHERE "+APP_IS_VISIBLE+" = '"+Constants.APP_VISIBLE+"'";
         ArrayList<AppInfoModel> appInfoList = new ArrayList<AppInfoModel>();
         AppInfoModel info ;
         Cursor cur = this.mDb.rawQuery(selectQuery, null);
@@ -226,8 +240,7 @@ public class AppInfoTable {
                                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
                 model.setIcon(info.activityInfo.loadIcon(manager));
                 model.setInstalled(true);
-
-
+                break;
             }
         }
     }

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -135,9 +136,14 @@ public class SettingScreen extends AppCompatActivity implements
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.fade_in,R.anim.shrink_from_bottomleft_to_topright);
 
+        if(settingManager.getCLPassword().equalsIgnoreCase("")||settingManager.getCLPassword()==null){
+            dfltPwd.setChecked(true);
+        }else {
+            handleVisibilityInSaveMode();
+        }
+        overridePendingTransition(R.anim.fade_in,R.anim.shrink_from_bottomleft_to_topright);
+        super.onBackPressed();
     }
 
     @Override
@@ -243,5 +249,19 @@ public class SettingScreen extends AppCompatActivity implements
 
             }
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        switch (menuItem.getItemId()) {
+            case android.R.id.home: {
+                if(settingManager.getCLPassword().equalsIgnoreCase("")||settingManager.getCLPassword()==null){
+                    dfltPwd.setChecked(true);
+                }else {
+                    handleVisibilityInSaveMode();
+                }
+            }
+        }
+        return (super.onOptionsItemSelected(menuItem));
     }
 }
