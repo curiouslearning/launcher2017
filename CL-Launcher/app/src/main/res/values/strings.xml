@@ -30,6 +30,8 @@
     <string name="network_error_text">Please check your network connection.</string>
     <string name="initializingTxt">Initializing ...</string>
     <string name="downloading_in_progress">Downloading is in progress.</string>
+    <string name="cl_db_name">CL_Launcher</string>
+    <string name="cl_db">CL_DB</string>
 
 
 </resources>

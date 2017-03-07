@@ -15,6 +15,9 @@ public class Constants {
     public static final String  APK_PATH =
             DATABASE_FILE_PATH+ File.separator+"APK";
 
+    public static final String  COPY_DB_FILE_PATH =
+            DATABASE_FILE_PATH+ File.separator+"copied_db_file";
+
     public static final String  STATUS_SYNC = "0";
     public static final String  STATUS_NOT_SYNC = "1";
 

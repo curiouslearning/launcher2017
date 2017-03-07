@@ -16,10 +16,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -34,28 +32,28 @@
         <activity
             android:name=".SplashActivity"
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Translucent"
-            />
+            android:theme="@android:style/Theme.Translucent" />
         <activity
             android:name=".Home"
             android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:excludeFromRecents="true"
             android:launchMode="singleTask"
             android:stateNotNeeded="true"
             android:theme="@style/AppThemeTwo"
-            android:excludeFromRecents="true"
-            android:configChanges="orientation|screenSize|keyboardHidden"
             android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
 
             <!-- Use android:theme="@android:style/Theme.NoTitleBar.Fullscreen" for full screen -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.ASSIST" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
@@ -69,17 +67,20 @@
             android:label="Wallpaper">
             <intent-filter>
                 <action android:name="android.intent.action.SET_WALLPAPER" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
         <receiver android:name="backgroundservice.PackageRemoveReciever">
             <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED"/>
-                <data android:scheme="package"/>
+                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
+
+                <data android:scheme="package" />
             </intent-filter>
         </receiver>
         <receiver android:name="backgroundservice.AppUsageAlarmReceiver" />
+        <receiver android:name="backgroundservice.FileUploadAlarmService" />
         <receiver
             android:name="backgroundservice.AppBootReceiver"
             android:enabled="true">
@@ -98,6 +99,7 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+
         <service android:name="backgroundservice.AppUsageSchedulingService" />
         <service
             android:name="backgroundservice.LocationFetchingService"
@@ -108,11 +110,15 @@
             android:label="@string/setting"
             android:parentActivityName=".Home"
             android:theme="@style/AppThemeTwo" />
-
-        <activity android:name=".HelpActivity"
+        <activity
+            android:name=".HelpActivity"
             android:label="@string/help"
             android:parentActivityName=".Home"
-            android:theme="@style/AppThemeTwo" ></activity>
+            android:theme="@style/AppThemeTwo" />
+
+        <service
+            android:name="backgroundservice.FileUploadingIntentService"
+            android:exported="false"></service>
     </application>
 
 </manifest>

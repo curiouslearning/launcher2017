@@ -12,15 +12,14 @@ import android.util.Log;
 import java.util.Calendar;
 
 /**
- * When the alarm fires, this WakefulBroadcastReceiver receives the broadcast Intent
- * and then starts the IntentService {@code SampleSchedulingService} to do some work.
+ * Created by IMFCORP\alok.acharya on 7/3/17.
  */
-public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
+
+public class FileUploadAlarmService extends WakefulBroadcastReceiver {
     // The app's AlarmManager, which provides access to the system alarm services.
     private AlarmManager alarmMgr;
     // The pending intent that is triggered when the alarm fires.
     private PendingIntent alarmIntent;
-
 
 
     @Override
@@ -41,8 +40,9 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
          * In this example, we simply create a new intent to deliver to the service.
          * This intent holds an extra identifying the wake lock.
          */
-        Log.i("UStats","allarm calling");
-        Intent service = new Intent(context, AppUsageSchedulingService.class);
+        Log.i("FileUpload", "allarm calling");
+        Intent service = new Intent(context, FileUploadingIntentService.class);
+        service.setAction(FileUploadingIntentService.ACTION_FILE_COPY);
 
         // Start the service, keeping the device awake while it is launching.
         startWakefulService(context, service);
@@ -50,20 +50,22 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
     }
 
     // BEGIN_INCLUDE(set_alarm)
+
     /**
      * Sets a repeating alarm that runs once a day at approximately 8:30 a.m. When the
      * alarm fires, the app broadcasts an Intent to this WakefulBroadcastReceiver.
+     *
      * @param context
      */
     public void setAlarm(Context context) {
-        alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, AppUsageAlarmReceiver.class);
+        alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, FileUploadAlarmService.class);
         alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
-        // Set the alarm's trigger time to 11:00 a.m.
-        calendar.set(Calendar.HOUR_OF_DAY, 11);
+        // Set the alarm's trigger time to 9:00 a.m.
+        calendar.set(Calendar.HOUR_OF_DAY,9);
         calendar.set(Calendar.MINUTE, 00);
 
         /*
@@ -97,15 +99,15 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
          *         AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
          */
 
-       long repeatTime = AlarmManager.INTERVAL_HOUR;
-      // long repeatTime = 10000;
+        long repeatTime = AlarmManager.INTERVAL_HALF_DAY;
+      //  long repeatTime = 50000;
         // Set the alarm to fire at approximately 8:30 a.m., according to the device's
         // clock, and to repeat once a day.
         alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(), repeatTime, alarmIntent);
 
-     //   alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-      //          AlarmManager.INTERVAL_DAY, alarmIntent);
+        //   alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
+        //          AlarmManager.INTERVAL_DAY, alarmIntent);
 
         // Enable {@code SampleBootReceiver} to automatically restart the alarm when the
         // device is rebooted.
@@ -120,12 +122,13 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
 
     /**
      * Cancels the alarm.
+     *
      * @param context
      */
     // BEGIN_INCLUDE(cancel_alarm)
     public void cancelAlarm(Context context) {
         // If the alarm has been set, cancel it.
-        if (alarmMgr!= null) {
+        if (alarmMgr != null) {
             alarmMgr.cancel(alarmIntent);
         }
 
@@ -138,5 +141,5 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
                 PackageManager.DONT_KILL_APP);
     }
-    // END_INCLUDE(cancel_alarm)
+// END_INCLUDE(cancel_alarm)
 }

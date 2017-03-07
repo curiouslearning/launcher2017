@@ -4,12 +4,15 @@ package apihandler;
 
 import com.google.gson.JsonObject;
 
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 
 /**
@@ -47,5 +50,13 @@ public interface ApiInterface {
     Call<JsonObject> getManifestCall(
             @Header("Authorization") String authorizationHeader,
             @Path("cl_serial_number") String cl_serial_number);
+
+
+    @Multipart
+    @POST("/tablet/{tablet-serial-number}/data")
+    Call<String> callUploadFile(
+            @Header("Authorization") String authorizationHeader,
+            @Path("tablet-serial-number") String tablet_serial_number,
+            @Part MultipartBody.Part file);
 
 }

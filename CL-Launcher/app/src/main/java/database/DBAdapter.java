@@ -101,8 +101,8 @@ public class DBAdapter {
 		public void onCreate(SQLiteDatabase db)
 		{
 
-			db.execSQL(CREATE_TABLE_APP_USAGE_INFO);
-			db.execSQL(CREATE_TABLE_LOCATION_INFO);
+			//db.execSQL(CREATE_TABLE_APP_USAGE_INFO);
+			//db.execSQL(CREATE_TABLE_LOCATION_INFO);
 			db.execSQL(CREATE_TABLE_INFO);
 			db.execSQL(CREATE_TABLE_APP_INFO);
 		}

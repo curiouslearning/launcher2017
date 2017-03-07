@@ -14,11 +14,13 @@ import android.content.Intent;
 // BEGIN_INCLUDE(autostart)
 public class AppBootReceiver extends BroadcastReceiver {
     AppUsageAlarmReceiver alarm = new AppUsageAlarmReceiver();
+    FileUploadAlarmService mFileUploadAlarmService = new FileUploadAlarmService();
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
         {
             alarm.setAlarm(context);
+            mFileUploadAlarmService.setAlarm(context);
         }
     }
 }
