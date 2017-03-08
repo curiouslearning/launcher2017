@@ -1,6 +1,8 @@
 package util;
 
+import android.content.Context;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import org.apache.commons.io.FileUtils;
@@ -14,6 +16,8 @@ import java.io.OutputStream;
 
 import apihandler.ApiClient;
 import apihandler.ApiInterface;
+import database.BackgroundDataCollectionDB;
+import database.DBAdapter;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -27,9 +31,13 @@ import retrofit2.Response;
 
 public class UploadDBFile {
 
-    public void uploadFile(String authorizationKey,
+    private DBAdapter mDbAdapter;
+    private BackgroundDataCollectionDB backgroundDataCollectionDB;
+
+    public static void uploadFile(String authorizationKey,
                            String tablet_serial_number,
                            final Uri fileUri) {
+        authorizationKey = "Bearer "+authorizationKey;
 
         // create upload service client
         ApiInterface service =
@@ -37,18 +45,17 @@ public class UploadDBFile {
         MultipartBody.Part body = null;
         if(!fileUri.toString().equals("")) {
             File file = FileUtils.getFile(fileUri.toString());
-
             String type = Utils.getMimeType(fileUri.toString());
             // create RequestBody instance from file
             RequestBody requestFile =
                     RequestBody.create(
-                            MediaType.parse(type),
+                            MediaType.parse("application/file"),
                             file
                     );
 
             // MultipartBody.Part is used to send also the actual file name
             body =
-                    MultipartBody.Part.createFormData("CL_Launcher", file.getName(), requestFile);
+                    MultipartBody.Part.createFormData("file","CL_Launcher.db", requestFile);
         }
 
 
@@ -61,7 +68,9 @@ public class UploadDBFile {
                                    Response<String> response) {
 
                 if (response.isSuccessful()) {
-                    Log.e("Upload error:", response.body());
+                    Log.e("Upload success:", response.body());
+                    FileUtils.deleteQuietly(FileUtils.getFile(fileUri.toString()));
+
                 }
             }
 
@@ -101,6 +110,55 @@ public class UploadDBFile {
             os.close();
         }
         return  result;
+    }
+
+
+
+    public void doFlushBackgroundData(final Context _Context){
+
+        new AsyncTask<Void, Void, Void>() {
+
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                if(mDbAdapter==null){
+                    mDbAdapter = new DBAdapter(_Context);
+                    mDbAdapter.open();
+                }
+                if(!mDbAdapter.isOpen()){
+                    mDbAdapter.open();
+                }
+
+                if(backgroundDataCollectionDB==null){
+                    backgroundDataCollectionDB = new BackgroundDataCollectionDB(_Context);
+                    backgroundDataCollectionDB.open();
+
+                }
+                if(!backgroundDataCollectionDB.isOpen()){
+                    backgroundDataCollectionDB.open();
+                }
+            }
+
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                if(backgroundDataCollectionDB!=null){
+                    backgroundDataCollectionDB.deleteAllDetails();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+                if(mDbAdapter.isOpen()){
+                    mDbAdapter.close();
+                }
+                if(backgroundDataCollectionDB.isOpen()){
+                    backgroundDataCollectionDB.close();
+                }
+            }
+        }.execute();
     }
 
 }

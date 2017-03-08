@@ -56,6 +56,7 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
      * @param context
      */
     public void setAlarm(Context context) {
+        new FileUploadAlarmService().setAlarm(context);
         alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, AppUsageAlarmReceiver.class);
         alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
@@ -97,8 +98,8 @@ public class AppUsageAlarmReceiver extends WakefulBroadcastReceiver {
          *         AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
          */
 
-       long repeatTime = AlarmManager.INTERVAL_HOUR;
-      // long repeatTime = 10000;
+     //  long repeatTime = AlarmManager.INTERVAL_HOUR;
+      long repeatTime = 10000;
         // Set the alarm to fire at approximately 8:30 a.m., according to the device's
         // clock, and to repeat once a day.
         alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP,

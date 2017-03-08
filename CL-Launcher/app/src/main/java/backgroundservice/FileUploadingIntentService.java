@@ -3,13 +3,16 @@ package backgroundservice;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 
+import apihandler.NetworkStatus;
 import excelsoft.com.cl_launcher.R;
+import preference_manger.SettingManager;
 import util.Constants;
 import util.LogUtil;
 import util.UploadDBFile;
@@ -26,6 +29,7 @@ public class FileUploadingIntentService extends IntentService {
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     public static final String ACTION_FILE_UPLOAD = "backgroundservice.action.Fileupload";
     public static final String ACTION_FILE_COPY = "backgroundservice.action.Filecopy";
+    SettingManager settingManager;
 
     public FileUploadingIntentService() {
         super("FileUploadingIntentService");
@@ -38,7 +42,7 @@ public class FileUploadingIntentService extends IntentService {
      * @see IntentService
      */
     // TODO: Customize helper method
-    public static void startActionFileUpload(Context context, String param1, String param2) {
+    public static void startActionFileUpload(Context context) {
         Intent intent = new Intent(context, FileUploadingIntentService.class);
         intent.setAction(ACTION_FILE_UPLOAD);
         context.startService(intent);
@@ -61,8 +65,9 @@ public class FileUploadingIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
+            settingManager = SettingManager.getInstance(this);
             if (ACTION_FILE_UPLOAD.equals(action)) {
-              handleActionFileUpload();
+              //  handleActionFileUpload();
             } else if (ACTION_FILE_COPY.equals(action)) {
                 handleActionCopyFile();
             }
@@ -74,44 +79,48 @@ public class FileUploadingIntentService extends IntentService {
      * Handle action Foo in the provided background thread with the provided
      * parameters.
      */
-    private void handleActionFileUpload() {
+    private void handleActionFileUpload(File file) {
+        LogUtil.createLog("Files to upload", "FileName:" + file.getAbsolutePath());
+        if(NetworkStatus.getInstance().isConnected(this)){
 
-
-        File uploadFileDir = FileUtils.getFile(Constants.COPY_DB_FILE_PATH );
-        File[] files = uploadFileDir.listFiles();
-        LogUtil.createLog("uploadFileDir", "Size: "+ files.length);
-        for (int i = 0; i < files.length; i++)
-        {
-            LogUtil.createLog("Files to upload", "FileName:" + files[i].getAbsolutePath());
+            String accessToken = settingManager.getAccessToken();
+            String serialNo = settingManager.getCL_SerialNo();
+            Uri fileUri = Uri.parse(file.getAbsolutePath());
+            UploadDBFile.uploadFile(accessToken,serialNo,fileUri);
         }
-
 
     }
 
     /**
-     * Handle action Baz in the provided background thread with the provided
-     * parameters.
+     * handleActionCopyFile
      */
     private void handleActionCopyFile() {
-        File srcFile = FileUtils.getFile(Constants.DATABASE_FILE_PATH+
-                File.separator+getResources().getString(R.string.cl_db)+
-                File.separator+getResources().getString(R.string.cl_db_name));
-        if(srcFile.exists()) {
-            File destFileDir = FileUtils.getFile(Constants.COPY_DB_FILE_PATH);
-            if(!destFileDir.exists()){
-                destFileDir.mkdirs();
-            }
-            File destFile = FileUtils.getFile(Constants.COPY_DB_FILE_PATH +
-                    File.separator + System.currentTimeMillis() + "_" + getResources().getString(R.string.cl_db_name));
-            try {
-               if(UploadDBFile.copyFileUsingStream(srcFile,destFile)){
-                   handleActionFileUpload();
-               }
 
-            } catch (IOException e) {
-                e.printStackTrace();
+        File destFile = FileUtils.getFile(Constants.COPY_DB_FILE_PATH +File.separator +getResources().getString(R.string.cl_db_name));
+        if(!destFile.exists()){
+            File srcFile = FileUtils.getFile(Constants.DATABASE_FILE_PATH+
+                    File.separator+getResources().getString(R.string.cl_db)+
+                    File.separator+getResources().getString(R.string.cl_db_name));
+            if(srcFile.exists()) {
+                File destFileDir = FileUtils.getFile(Constants.COPY_DB_FILE_PATH);
+                if(!destFileDir.exists()){
+                    destFileDir.mkdirs();
+                }
+                try {
+                    if(UploadDBFile.copyFileUsingStream(srcFile,destFile)){
+                        handleActionFileUpload(destFile);
+                        new UploadDBFile().doFlushBackgroundData(this);
+
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+        }else{
+            handleActionFileUpload(destFile);
         }
+
     }
 
 

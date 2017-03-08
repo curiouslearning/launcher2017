@@ -94,7 +94,6 @@ import apihandler.ApiClient;
 import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
 import backgroundservice.AppUsageAlarmReceiver;
-import backgroundservice.FileUploadAlarmService;
 import backgroundservice.InAppDataCollectionReceiver;
 import backgroundservice.LocationFetchingService;
 import database.AppInfoTable;
@@ -185,7 +184,6 @@ public class Home extends BaseActivity implements View.OnClickListener{
     WindowManager manager;
     customViewGroup view;
     AppUsageAlarmReceiver mAppUsageAlarmReceiver;
-    FileUploadAlarmService fileUploadAlarmService;
     private boolean grantedAllPermission = false;
     private SettingManager settingManager;
     private ApiInterface apiService;
@@ -1145,8 +1143,6 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 break;
             case Constants.USAGE_STATE_PERMISSION:
                 mAppUsageAlarmReceiver = new AppUsageAlarmReceiver();
-                fileUploadAlarmService = new FileUploadAlarmService();
-                fileUploadAlarmService.setAlarm(this);
                 mAppUsageAlarmReceiver.setAlarm(this);
                 grantedAllPermission=true;
                 break;
@@ -1234,16 +1230,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
             }else{
                 mAppUsageAlarmReceiver = new AppUsageAlarmReceiver();
                 mAppUsageAlarmReceiver.setAlarm(this);
-                fileUploadAlarmService = new FileUploadAlarmService();
-                fileUploadAlarmService.setAlarm(this);
                 grantedAllPermission =true;
                 // startOverlay();
             }
         }else {
             mAppUsageAlarmReceiver = new AppUsageAlarmReceiver();
             mAppUsageAlarmReceiver.setAlarm(this);
-            fileUploadAlarmService = new FileUploadAlarmService();
-            fileUploadAlarmService.setAlarm(this);
             grantedAllPermission =true;
             checkLocationSettings();
             // startOverlay();

@@ -116,6 +116,7 @@ public class BackgroundDataCollectionDB {
     public synchronized void deleteAllDetails(){
 
         String deletequery ="DELETE from "+ BACKGROUND_DATA_COLLECTION_TABLE;
+        System.out.println("countQuery......"+deletequery);
         this.mDb.execSQL(deletequery);
     }
 
