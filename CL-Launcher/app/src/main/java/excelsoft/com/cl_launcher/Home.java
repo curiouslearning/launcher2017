@@ -22,6 +22,7 @@ package excelsoft.com.cl_launcher;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.WallpaperManager;
@@ -201,6 +202,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        removeALLApps();
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
         allFunctionalInitiationAction();
 
@@ -1558,7 +1560,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private void parseData(JsonObject jsonObject){
         try {
             AppInfoModel model = null;
-            String version = jsonObject.get(Constants.KEY_VERSION).getAsString();
+            String clVersion = jsonObject.get(Constants.KEY_VERSION).getAsString();
             JsonArray apps = jsonObject.getAsJsonArray(Constants.KEY_APPS);
             for (int i = 0; i < apps.size(); i++) {
                 JsonObject jsonAppObject = apps.get(i).getAsJsonObject();
@@ -1573,7 +1575,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model.setDownloaded(false);
                 model.setInstalled(false);
                 model.setIcon(getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
-                model.setVersion(version);
+                model.setVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString());
                 doInsertUpdateProcess(model);
             }
 
@@ -1627,4 +1629,30 @@ public class Home extends BaseActivity implements View.OnClickListener{
         return  mAppInfoTable.updateAppDownLoadInfo(id,status);
     }
 
+
+    //Hiding recent task.
+    @Override
+    protected void onPause() {
+        super.onPause();
+       /* ActivityManager activityManager = (ActivityManager) getApplicationContext()
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        activityManager.moveTaskToFront(getTaskId(), 0);*/
+
+        ;
+
+    }
+
+
+    private void removeALLApps(){
+        PackageManager pm = getPackageManager();
+        //get a list of installed apps.
+        List<android.content.pm.ApplicationInfo> packages = pm.getInstalledApplications(0);
+        ActivityManager mActivityManager = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
+        String myPackage = getApplicationContext().getPackageName();
+        for (android.content.pm.ApplicationInfo packageInfo : packages) {
+            if((packageInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM)==1)continue;
+            if(packageInfo.packageName.equals(myPackage)) continue;
+            mActivityManager.killBackgroundProcesses(packageInfo.packageName);
+        }
+    }
 }
