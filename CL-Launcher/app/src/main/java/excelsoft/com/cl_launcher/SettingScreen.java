@@ -4,6 +4,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -263,5 +264,10 @@ public class SettingScreen extends AppCompatActivity implements
             }
         }
         return (super.onOptionsItemSelected(menuItem));
+    }
+
+
+    public void wifiClick(View view){
+        startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
     }
 }

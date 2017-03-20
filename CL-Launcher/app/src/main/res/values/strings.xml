@@ -32,6 +32,7 @@
     <string name="downloading_in_progress">Downloading is in progress.</string>
     <string name="cl_db_name">CL_Launcher</string>
     <string name="cl_db">CL_DB</string>
+    <string name="wifi_text">Set Wi-Fi</string>
 
 
 </resources>

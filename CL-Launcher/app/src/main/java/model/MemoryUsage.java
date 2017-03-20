@@ -41,6 +41,19 @@ public class MemoryUsage {
         @SerializedName("timestamp")
         @Expose
         private String timestamp;
+
+        public String getManifest_version() {
+            return manifest_version;
+        }
+
+        public void setManifest_version(String manifest_version) {
+            this.manifest_version = manifest_version;
+        }
+
+        @SerializedName("manifest_version")
+        @Expose
+        private String manifest_version;
+
         @SerializedName("android_version")
         @Expose
         private String androidVersion;

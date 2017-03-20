@@ -21,6 +21,7 @@ public class SettingManager{
     private final String RESTRICT_SETTING_SCREEN = "restrict_setting_screen";
     private final String GOT_IT_KEY = "got_it";
     private final String CL_PWD_KEY = "cl_pwd";
+    private final String CL_MANIFEST_VERSION_KEY = "manifest_version_key";
 
     private SharedPreferences mSharedPreferences;
     private SharedPreferences.Editor mEditor;
@@ -124,5 +125,16 @@ public class SettingManager{
         mEditor.putString(CL_ACCESS_TOKEN_EXPIRE_KEY,time);
         mEditor.commit();
     }
+
+
+    public String getManifestVersion(){
+        return mSharedPreferences.getString(CL_MANIFEST_VERSION_KEY, "");
+    }
+
+    public void setManifestVersion(String version){
+        mEditor.putString(CL_MANIFEST_VERSION_KEY,version);
+        mEditor.commit();
+    }
+
 
 }

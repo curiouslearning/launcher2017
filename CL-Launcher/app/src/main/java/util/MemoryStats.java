@@ -16,6 +16,7 @@ import database.BackgroundDataCollectionDB;
 import database.DBAdapter;
 import model.BackgroundDataModel;
 import model.MemoryUsage;
+import preference_manger.SettingManager;
 
 import static android.content.Context.ACTIVITY_SERVICE;
 import static util.Constants.KEY_MEMORY_USAGE;
@@ -100,6 +101,8 @@ public class MemoryStats {
 
             }
             memValue.setClDataSpace("");
+            memValue.setManifest_version(SettingManager.getInstance(context).getManifestVersion());
+            memValue.setTimestamp(System.currentTimeMillis()+"");
         }
 
         memoryUsage.setValue(memValue);
