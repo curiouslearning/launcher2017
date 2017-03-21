@@ -65,7 +65,8 @@ public class InAppRecordStats {
                 model.setTimeStamp(timeStamp+"");
                 model.setJsonData(jsonData);
                 if(backgroundDataCollectionDB!=null){
-                    backgroundDataCollectionDB.insertInfo(model);
+                    long stats = backgroundDataCollectionDB.insertInfo(model);
+                    LogUtil.createLog("backgroundDataCollectionDB row no",stats+"");
                 }
                 return null;
             }

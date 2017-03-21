@@ -4,9 +4,13 @@ import android.app.IntentService;
 import android.content.Intent;
 
 import java.util.Calendar;
+import java.util.HashMap;
 
+import database.APPInfoDB;
+import database.AppInfoTable;
 import database.BackgroundDataCollectionDB;
 import database.DBAdapter;
+import model.AppInfoModel;
 import preference_manger.SettingManager;
 import util.MemoryStats;
 import util.UStats;
@@ -27,6 +31,9 @@ public class AppUsageSchedulingService extends IntentService {
     long startTime =0;
     DBAdapter mDbAdapter;
     BackgroundDataCollectionDB backgroundDataCollectionDB;
+    APPInfoDB mAppInfoDB;
+    AppInfoTable appInfoTable;
+    private HashMap<String, AppInfoModel> appCollectionMap;
 
 
 
@@ -37,6 +44,10 @@ public class AppUsageSchedulingService extends IntentService {
         mDbAdapter.open();
         backgroundDataCollectionDB = new BackgroundDataCollectionDB(this);
         backgroundDataCollectionDB.open();
+        mAppInfoDB = new APPInfoDB(this);
+        mAppInfoDB.open();
+        appInfoTable = new AppInfoTable(this);
+        appInfoTable.open();
 
     }
 
@@ -47,6 +58,10 @@ public class AppUsageSchedulingService extends IntentService {
             backgroundDataCollectionDB.close();
         if(mDbAdapter!=null)
             mDbAdapter.close();
+        if(appInfoTable!=null)
+            appInfoTable.close();
+        if(mAppInfoDB!=null)
+            mAppInfoDB.close();
 
         super.onDestroy();
     }
@@ -78,7 +93,8 @@ public class AppUsageSchedulingService extends IntentService {
         }
         UStats instance =  UStats.getInstance(this);
         instance.setDBHandler(mDbAdapter,backgroundDataCollectionDB);
-        instance.getCurrentUsageStatus(this,startTime);
+        appCollectionMap = appInfoTable.getAppInfoMap();
+        instance.getCurrentUsageStatus(this,startTime,appCollectionMap);
         MemoryStats.getInstance(mDbAdapter,backgroundDataCollectionDB,this)._doInsertInfo();
     }
 

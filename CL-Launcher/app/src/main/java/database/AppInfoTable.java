@@ -13,14 +13,15 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import model.AppInfoModel;
 import util.Constants;
 import util.LogUtil;
 
-import static database.DBAdapter.DATABASE_NAME;
-import static database.DBAdapter.DATABASE_VERSION;
+import static database.APPInfoDB.DATABASE_NAME;
+import static database.APPInfoDB.DATABASE_VERSION;
 
 
 /**
@@ -61,7 +62,7 @@ public class AppInfoTable {
         DatabaseHelper(Context context) {
             //super(context, DBAdapter.DATABASE_NAME, null, DBAdapter.DATABASE_VERSION);
             super(context, Constants.DATABASE_FILE_PATH
-                    + File.separator + "CL_DB"
+                    + File.separator + "CL_APP_INFO_DB"
                     + File.separator + DATABASE_NAME, null, DATABASE_VERSION);
         }
 
@@ -118,7 +119,7 @@ public class AppInfoTable {
 
 
     public long insertAppInfo(AppInfoModel info){
-        LogUtil.createLog(TAG,"inserting data into  data base...");
+        LogUtil.createLog(TAG,"inserting data into  data base..."+info.getApkName());
         ContentValues initialValues = new ContentValues();
         initialValues.put(APP_ID, info.getId());
         initialValues.put(APP_TITLE, info.getTitle());
@@ -221,6 +222,36 @@ public class AppInfoTable {
             }while(cur.moveToNext());
         }
         return appInfoList;
+
+
+    }
+
+
+    public HashMap<String,AppInfoModel> getAppInfoMap() {
+
+        String selectQuery = "SELECT * FROM " + APP_INFO_TABLE+" WHERE "+APP_IS_VISIBLE+" = '"+Constants.APP_VISIBLE+"'";
+        HashMap<String,AppInfoModel> map = new HashMap<String,AppInfoModel>();
+        AppInfoModel info ;
+        Cursor cur = this.mDb.rawQuery(selectQuery, null);
+        if(cur.moveToFirst()){
+            do{
+                info = new AppInfoModel();
+                info.setId(cur.getInt(1));
+                info.setTitle(cur.getString(2));
+                info.setAppPckageName(cur.getString(3));
+                info.setApkName(cur.getString(4));
+                info.setContentType(cur.getString(5));
+                info.setType(cur.getString(6));
+                info.setVisible(cur.getInt(7));
+                info.setVersion(cur.getString(8));
+                info.setDownloaded(Boolean.parseBoolean(cur.getString(9)));
+                info.setInstalled(Boolean.parseBoolean(cur.getString(10)));
+                info.setLocalPath(cur.getString(11));
+                info.setIsUpdateVersionExist(cur.getInt(12));
+                map.put(info.getAppPckageName(),info);
+            }while(cur.moveToNext());
+        }
+        return map;
 
 
     }

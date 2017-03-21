@@ -2,12 +2,14 @@ package adapter;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.thin.downloadmanager.DefaultRetryPolicy;
@@ -27,6 +29,7 @@ import excelsoft.com.cl_launcher.R;
 import model.AppInfoModel;
 import preference_manger.SettingManager;
 import util.Constants;
+import util.LogUtil;
 import util.Utils;
 
 /**
@@ -47,6 +50,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
     private ArrayList<AppInfoModel> dataList;
     private Context context;
     private SettingManager settingManager;
+    public static final long appUpdateTime =60000L;
 
     public AppInfoAdapter(Context context,ArrayList<AppInfoModel> dataList) {
         this.dataList=dataList;
@@ -93,6 +97,13 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             }
         }
 
+        if(model.getType()!=null){
+            holder.frame.setVisibility(View.VISIBLE);
+        }else{
+            holder.frame.setVisibility(View.GONE);
+        }
+
+
         holder.icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -125,11 +136,13 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         public ContentLoadingProgressBar loader;
         public TextView title;
         public ImageView icon;
+        public LinearLayout frame;
         public CustomViewHolder(View itemView) {
             super(itemView);
             loader = (ContentLoadingProgressBar) itemView.findViewById(R.id.progressBarContentLoading);
             title = (TextView) itemView.findViewById(R.id.text);
             icon = (ImageView) itemView.findViewById(R.id.icon);
+            frame = (LinearLayout) itemView.findViewById(R.id.appFrame);
 
         }
     }
@@ -144,6 +157,13 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
 
         Uri downloadUri = Uri.parse(downloadUrl);
         Uri destinationUri = Uri.parse(filesDir+"/"+title+".apk");
+        File destinationUriFile = new File(destinationUri.toString());
+        if(destinationUriFile.exists()){
+            destinationUriFile.delete();
+            LogUtil.createLog("File delete before download",destinationUri.toString());
+        }
+
+
         final DownloadRequest downloadRequest = new DownloadRequest(downloadUri)
                 .setDestinationURI(destinationUri).setPriority(DownloadRequest.Priority.LOW)
                 .setRetryPolicy(retryPolicy)
@@ -172,22 +192,35 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         public void onDownloadComplete(DownloadRequest request) {
             final int id = request.getDownloadId();
             model = downLoadMap.get(id);
+            LogUtil.createLog("onDownloadComplete ::",model.getTitle());
             position = downLoadMapPosition.get(id);
             if(home!=null){
                 if(home.updateDownloadInfo(model.getId(),true)) {
                     model.setDownloaded(true);
                     notifyItemChanged(position);
                 }}
+
+            if(model.getType()==null){
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        home.checkAndStartUpdatCLAPP();
+                    }
+                },appUpdateTime) ;
+
+            }
             if(downLoadMapPosition.size()>0)
                 downLoadMapPosition.remove(id);
             if(downLoadMap.size()>0)
                 downLoadMap.remove(id);
+
         }
 
         @Override
         public void onDownloadFailed(DownloadRequest request, int errorCode, String errorMessage) {
             final int id = request.getDownloadId();
             model = downLoadMap.get(id);
+            LogUtil.createLog("onDownloadFailed ::",model.getTitle());
             position = downLoadMapPosition.get(id);
             if(home!=null){
                 if(home.updateDownloadInfo(model.getId(),false)) {
@@ -219,6 +252,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         //  long downLoadID = DownloadAPKFileManger.startDownloadManager(context, apkDownloadUrl,model.getTitle(), Constants.APK_PATH);
         int downloadId = startDownLoad(model.getId(),apkDownloadUrl,model.getTitle(),settingManager.getAccessToken());
         // myDownloadStatusListener.setModel(model,position);
+        LogUtil.createLog("startDownLoad ::",model.getTitle());
         downLoadMap.put(downloadId,model);
         downLoadMapPosition.put(downloadId,position);
     }

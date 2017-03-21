@@ -88,6 +88,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import adapter.AppInfoAdapter;
 import apihandler.ApiClient;
@@ -96,8 +98,8 @@ import apihandler.NetworkStatus;
 import backgroundservice.AppUsageAlarmReceiver;
 import backgroundservice.InAppDataCollectionReceiver;
 import backgroundservice.LocationFetchingService;
+import database.APPInfoDB;
 import database.AppInfoTable;
-import database.DBAdapter;
 import device_admin_utill.CLDeviceManger;
 import model.AppInfoModel;
 import preference_manger.SettingManager;
@@ -192,11 +194,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private ArrayList<AppInfoModel> appInfoList = new ArrayList<>();
     private RecyclerView mRcRecyclerView;
     private GridLayoutManager lLayout;
-    private DBAdapter mDbAdapter;
+   // private DBAdapter mDbAdapter;
+    private APPInfoDB appInfoDB;
     private AppInfoTable mAppInfoTable;
     private int initialAppInfoCountFromDb = 0;
     private HashMap<String,AppInfoModel > packageMap = new HashMap<>();
     private HomeKeyLocker mHomeKeyLocker;
+    private Timer timerTask = null;
+    public static final String clPckgName = "com.excelsoft.cl-launcher";
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -328,8 +333,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
     private void openDBandLoadApp(){
-        mDbAdapter = new DBAdapter(this);
-        mDbAdapter.open();
+        appInfoDB = new APPInfoDB(this);
+        appInfoDB.open();
         mAppInfoTable = new AppInfoTable(this);
         mAppInfoTable.open();
         loadApplications();
@@ -371,8 +376,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
         if(mAppInfoTable!=null)
             mAppInfoTable.close();
-        if(mDbAdapter!=null)
-            mDbAdapter.close();
+        if(appInfoDB!=null)
+            appInfoDB.close();
 
 
     }
@@ -911,6 +916,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
                     if(packageMap.get(added_package)!=null && packageMap.get(added_package).getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE)
                         mAppInfoTable.updateAppUpdateAvailableInfo(added_package,Constants.UPDATE_NOT_AVAILABLE);
 
+                    if(added_package.equals(clPckgName)){
+                      //  stopTimer();
+                    }
                 }
             }
             loadApplications();
@@ -1569,6 +1577,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model.setAppPckageName(jsonAppObject.get(Constants.KEY_FILE).getAsString());
                 model.setTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
                 model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
+                if(jsonAppObject.has(Constants.KEY_TYPE))
                 model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
                 model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
                 model.setDownloaded(false);
@@ -1580,6 +1589,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
         }catch (Exception e){
 
+            e.printStackTrace();
         }
     }
 
@@ -1642,6 +1652,33 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
 
+
+    public void checkAndStartUpdatCLAPP(){
+        if(packageMap.get(clPckgName).getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE){
+          // startTimer();
+            Utils.installAPK(Home.this,"CL-Launcher");
+        }
+    }
+
+    private void startTimer() {
+            if (timerTask == null) {
+                timerTask = new Timer();
+                timerTask.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Utils.installAPK(Home.this,"CL-Launcher");
+                    }
+                }, 0, AppInfoAdapter.appUpdateTime);
+            }
+    }
+
+    private void stopTimer() {
+        if (timerTask != null) {
+            timerTask.cancel();
+            timerTask = null;
+            Log.i("Timer Cancel","Stop Timer Called.");
+        }
+    }
 
 
 }

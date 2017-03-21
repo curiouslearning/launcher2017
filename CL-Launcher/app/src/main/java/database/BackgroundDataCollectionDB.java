@@ -26,7 +26,7 @@ public class BackgroundDataCollectionDB {
     public static final String ROW_ID = "_id";
     public static final String NAME = "name";
     public static final String TIME_STAMP = "timestamp";
-    public static final String JSON_DATA = "data";
+    public static final String JSON_DATA = "value";
     private final String  TAG = "BackgroundDataCollectionTable";
     private static final String BACKGROUND_DATA_COLLECTION_TABLE = "BackgroundDataCollectionTable";
 

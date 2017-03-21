@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import database.APPInfoDB;
 import database.AppInfoTable;
-import database.DBAdapter;
 import util.Constants;
 import util.LogUtil;
 import util.Utils;
@@ -14,7 +14,7 @@ import util.Utils;
  * Created by IMFCORP\alok.acharya on 3/3/17.
  */
 public class PackageRemoveReciever extends BroadcastReceiver {
-    DBAdapter maDbAdapter;
+    APPInfoDB maDbAdapter;
     AppInfoTable mAppInfoTable;
 
     @Override
@@ -32,7 +32,7 @@ public class PackageRemoveReciever extends BroadcastReceiver {
 
     private void doUpdateAppInfo(Context context,String pckgId){
         try {
-        maDbAdapter = new DBAdapter(context);
+        maDbAdapter = new APPInfoDB(context);
         maDbAdapter.open();
         mAppInfoTable = new AppInfoTable(context);
         mAppInfoTable.open();

@@ -15,12 +15,14 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import database.BackgroundDataCollectionDB;
 import database.DBAdapter;
+import model.AppInfoModel;
 import model.AppUsageModel;
 import model.BackgroundDataModel;
 
@@ -33,6 +35,7 @@ public class UStats {
     private DateFormat mDateFormat = new SimpleDateFormat();
     public static final String TAG = UStats.class.getSimpleName();
     private DBAdapter mDbAdapter;
+    private HashMap<String, AppInfoModel> appCollectionMap;
     // private DeviceAppUsageTable mDeviceAppUsageTable;
     private BackgroundDataCollectionDB backgroundDataCollectionDB;
     private Context _Context;
@@ -90,13 +93,14 @@ public class UStats {
             mAppUsageModel.setSync_status(Constants.STATUS_NOT_SYNC);
             mAppUsageModel.setSync_time(mDateFormat.format(new Date(Calendar.getInstance().getTimeInMillis())));
             LogUtil.createLog(TAG, "Pkg: " + u.getPackageName() +  "\t" + "ForegroundTime: "
-                    + u.getTotalTimeInForeground()) ;
+                    + u.getTotalTimeInForeground()+"first time stamp :"+u.getFirstTimeStamp()) ;
             _insertToDB(mAppUsageModel);
         }
 
     }
 
-    public void getCurrentUsageStatus(Context context,long startTime){
+    public void getCurrentUsageStatus(Context context,long startTime,HashMap<String, AppInfoModel> appCollectionMap){
+        this.appCollectionMap=appCollectionMap;
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)
             printUsageStats(context,getUsageStatsList(context,startTime));
         else
@@ -159,16 +163,20 @@ public class UStats {
      */
     private void _insertToDB(AppUsageModel appUsageModel){
         try{
-            if(mDbAdapter!=null)
-                mDbAdapter.open();
-            if(backgroundDataCollectionDB !=null){
-                backgroundDataCollectionDB.open();
-                BackgroundDataModel model = new BackgroundDataModel();
-                model.setName(_Context.getPackageName());
-                model.setTimeStamp(System.currentTimeMillis()+"");
-                model.setJsonData(getJsonFromModel(appUsageModel));
-                if(backgroundDataCollectionDB!=null){
-                    backgroundDataCollectionDB.insertInfo(model);
+            if(appCollectionMap!=null){
+                if(appCollectionMap.get(appUsageModel.getApp_package_name())!=null){
+                    if(mDbAdapter!=null)
+                        mDbAdapter.open();
+                    if(backgroundDataCollectionDB !=null){
+                        backgroundDataCollectionDB.open();
+                        BackgroundDataModel model = new BackgroundDataModel();
+                        model.setName(appUsageModel.getApp_name());
+                        model.setTimeStamp(System.currentTimeMillis()+"");
+                        model.setJsonData(getJsonFromModel(appUsageModel));
+                        if(backgroundDataCollectionDB!=null){
+                            backgroundDataCollectionDB.insertInfo(model);
+                        }
+                    }
                 }
             }
         }catch(Exception e){
