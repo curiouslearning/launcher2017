@@ -72,8 +72,8 @@ public class MemoryStats {
         memoryUsage.setKey(KEY_MEMORY_USAGE);
         memValue.setTabletID(getDeviceId(context));
         memValue.setAndroidVersion(getAndroidVersion());
-        memValue.setSpaceAvailable(memoryInfo.availMem+"");
-        memValue.setSpaceInUse(memUsed+"");
+        memValue.setSpaceAvailable_kb(memoryInfo.availMem+"");
+        memValue.setSpaceInUse_kb(memUsed+"");
 
         List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = activityManager.getRunningAppProcesses();
 
@@ -97,10 +97,10 @@ public class MemoryStats {
                 Log.i("Info", " pidMemoryInfo.getTotalPss(): " + pidMemoryInfo.getTotalPss() + "\n");
                 Log.i("Info", " pidMemoryInfo.getTotalSharedDirty(): " + pidMemoryInfo.getTotalSharedDirty() + "\n");
                 // Log.i("Info", " pidMemoryInfo.getTotalSharedDirty(): " + pidMemoryInfo.getMemoryStats() + "\n"
-                memValue.setClSoftwareSpace(pidMemoryInfo.getTotalPss()+"");
+                memValue.setClSoftwareSpace_kb(pidMemoryInfo.getTotalPss()+"");
 
             }
-            memValue.setClDataSpace("");
+            memValue.setClDataSpace_kb("");
             memValue.setManifest_version(SettingManager.getInstance(context).getManifestVersion());
             memValue.setTimestamp(System.currentTimeMillis()+"");
         }

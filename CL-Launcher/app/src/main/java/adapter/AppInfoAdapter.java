@@ -1,8 +1,6 @@
 package adapter;
 
 import android.content.Context;
-import android.net.Uri;
-import android.os.Handler;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,25 +10,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.thin.downloadmanager.DefaultRetryPolicy;
-import com.thin.downloadmanager.DownloadManager;
-import com.thin.downloadmanager.DownloadRequest;
-import com.thin.downloadmanager.DownloadStatusListenerV1;
-import com.thin.downloadmanager.RetryPolicy;
-import com.thin.downloadmanager.ThinDownloadManager;
-
-import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 
-import apihandler.ApiConstant;
 import excelsoft.com.cl_launcher.Home;
 import excelsoft.com.cl_launcher.R;
 import model.AppInfoModel;
 import preference_manger.SettingManager;
-import util.Constants;
 import util.LogUtil;
-import util.Utils;
 
 /**
  * Created by IMFCORP\alok.acharya on 24/2/17.
@@ -38,27 +24,28 @@ import util.Utils;
 
 public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomViewHolder>{
 
-    private ThinDownloadManager downloadManager;
+    // private ThinDownloadManager downloadManager;
     private static final int DOWNLOAD_THREAD_POOL_SIZE = 4;
-    MyDownloadDownloadStatusListenerV1
-            myDownloadStatusListener = new MyDownloadDownloadStatusListenerV1();
-    RetryPolicy retryPolicy;
+    // MyDownloadDownloadStatusListenerV1
+    //         myDownloadStatusListener = new MyDownloadDownloadStatusListenerV1();
+    // RetryPolicy retryPolicy;
     Home home;
-    HashMap<Integer,AppInfoModel> downLoadMap = new HashMap<>();
-    HashMap<Integer,Integer> downLoadMapPosition = new HashMap<>();
-
     private ArrayList<AppInfoModel> dataList;
     private Context context;
     private SettingManager settingManager;
     public static final long appUpdateTime =60000L;
+    OnItemDownLoadStartListener onItemDownLoadStartListener;
+    OnItemClickListener onItemClickListener;
+
 
     public AppInfoAdapter(Context context,ArrayList<AppInfoModel> dataList) {
         this.dataList=dataList;
         this.context=context;
         this.settingManager = SettingManager.getInstance(context);
-        downloadManager = new ThinDownloadManager(DOWNLOAD_THREAD_POOL_SIZE);
-        retryPolicy = new DefaultRetryPolicy();
+        ////downloadManager = new ThinDownloadManager(DOWNLOAD_THREAD_POOL_SIZE);
+        //retryPolicy = new DefaultRetryPolicy();
         home = (Home) context;
+
     }
 
 
@@ -75,13 +62,15 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
 
     @Override
     public void onBindViewHolder(CustomViewHolder holder, int position) {
+        LogUtil.createLog("onBindViewHolder called",position+"");
         final AppInfoModel model = dataList.get(position);
         holder.title.setText(model.getTitle());
         if(model.isInstalled()) {
             holder.loader.setVisibility(View.GONE);
             holder.icon.setImageDrawable(model.getIcon());
             if(model.getIsUpdateVersionExist()==1&&!model.isDownloaded()){
-                initDownLoad(model,position);
+                if(onItemDownLoadStartListener!=null)
+                onItemDownLoadStartListener.onStartDownLoad(position);
             }
 
         }else{
@@ -89,11 +78,15 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             if(model.isDownloaded()) {
                 holder.loader.setVisibility(View.GONE);
                 holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_install));
+            }else if(model.isDownloadedFailed()) {
+                holder.loader.setVisibility(View.GONE);
+                holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
             }else{
 
                 holder.loader.setVisibility(View.VISIBLE);
                 holder.icon.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
-                initDownLoad(model,position);
+                if(onItemDownLoadStartListener!=null)
+                onItemDownLoadStartListener.onStartDownLoad(position);
             }
         }
 
@@ -104,7 +97,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         }
 
 
-        holder.icon.setOnClickListener(new View.OnClickListener() {
+       /* holder.icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(model.isInstalled()){
@@ -122,7 +115,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
                 }
             }
         });
-
+*/
 
 
     }
@@ -132,7 +125,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         return dataList.size();
     }
 
-    public class CustomViewHolder extends RecyclerView.ViewHolder{
+    public class CustomViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         public ContentLoadingProgressBar loader;
         public TextView title;
         public ImageView icon;
@@ -143,13 +136,24 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             title = (TextView) itemView.findViewById(R.id.text);
             icon = (ImageView) itemView.findViewById(R.id.icon);
             frame = (LinearLayout) itemView.findViewById(R.id.appFrame);
+            frame.setOnClickListener(this);
 
+        }
+
+        @Override
+        public void onClick(View v) {
+            if(onItemClickListener!=null){
+                onItemClickListener.onClick(getPosition());
+            }
         }
     }
 
 
 
-    private int startDownLoad(int downloadId,String downloadUrl,String title,String accessToken){
+   /* private int startDownLoad(int downloadId,String downloadUrl,String title,String accessToken){
+
+        LogUtil.createLog("File start download",downloadUrl);
+
         File filesDir = new File(Constants.APK_PATH);
         if(!filesDir.exists()){
             filesDir.mkdir();
@@ -172,8 +176,12 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
                 .setPriority(DownloadRequest.Priority.HIGH)
                 .setStatusListener(myDownloadStatusListener);
 
+
+        int status = downloadManager.query(downloadId);
+
         if (downloadManager.query(downloadId) == DownloadManager.STATUS_NOT_FOUND) {
             downloadId = downloadManager.add(downloadRequest);
+            LogUtil.createLog("download starting",destinationUri.toString());
         }
         return downloadId;
     }
@@ -222,10 +230,13 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             model = downLoadMap.get(id);
             LogUtil.createLog("onDownloadFailed ::",model.getTitle());
             position = downLoadMapPosition.get(id);
+            downLoadIdMap.put(model.getAppPckageName(),id);
             if(home!=null){
                 if(home.updateDownloadInfo(model.getId(),false)) {
                     model.setDownloaded(false);
                     notifyItemChanged(position);
+                    model.setDownloadedFailed(true);
+                    Utils.showToast(context,"There is problem for downloading some file.");
                 }
             }
             if(downLoadMapPosition.size()>0)
@@ -241,20 +252,34 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             System.out.println("######## onProgress ###### "+id+" : "+totalBytes+" : "+downloadedBytes+" : "+progress);
 
         }
+    }*/
+
+
+
+
+
+
+    public interface OnItemDownLoadStartListener {
+        void onStartDownLoad(int position);
+    }
+
+    public interface OnItemClickListener {
+        void onClick(int position);
     }
 
 
 
-    private void initDownLoad(AppInfoModel model,int position){
-        String apkDownloadUrl = ApiConstant.APK_ENDPOINT_URL+settingManager.getCL_SerialNo()+ApiConstant.APK+
-                model.getApkName();
-        //  DownloadAPKFileManger.getDownloadManager(context);
-        //  long downLoadID = DownloadAPKFileManger.startDownloadManager(context, apkDownloadUrl,model.getTitle(), Constants.APK_PATH);
-        int downloadId = startDownLoad(model.getId(),apkDownloadUrl,model.getTitle(),settingManager.getAccessToken());
-        // myDownloadStatusListener.setModel(model,position);
-        LogUtil.createLog("startDownLoad ::",model.getTitle());
-        downLoadMap.put(downloadId,model);
-        downLoadMapPosition.put(downloadId,position);
+    public void setOnItemDownLoadStartListener(OnItemDownLoadStartListener onItemDownLoadStartListener){
+        this.onItemDownLoadStartListener=onItemDownLoadStartListener;
     }
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener){
+        this.onItemClickListener=onItemClickListener;
+    }
+
+
+
+
+
 
 }

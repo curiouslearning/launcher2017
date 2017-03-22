@@ -10,6 +10,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.text.TextUtils;
@@ -186,7 +187,9 @@ public class Utils {
     }
 
     public static String getAndroidVersion(){
-        return ""+android.os.Build.VERSION.SDK_INT;
+        String versionRelease = Build.VERSION.RELEASE;
+       // return ""+android.os.Build.VERSION.SDK_INT;
+        return versionRelease;
     }
 
     public static String getAppVersion(Context context){
@@ -244,5 +247,10 @@ public class Utils {
             type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
         }
         return type;
+    }
+
+
+    public static String getVersionName(Context context) throws PackageManager.NameNotFoundException {
+        return  context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
     }
 }

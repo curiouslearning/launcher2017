@@ -34,6 +34,9 @@ public class APPInfoDB {
                     + AppInfoTable.APP_IS_INSTALLED+ " TEXT,"
                     + AppInfoTable.APP_APK_LOCAL_PATH+ " TEXT,"
                     + AppInfoTable.AVAILABLE_UPDATE_VERSION+ " integer,"
+                    + AppInfoTable.UPDATE_VERSION+ " TEXT,"
+                    + AppInfoTable.IS_UPDATED+ " TEXT,"
+                    + AppInfoTable.MISC+ " integer,"
                     + AppInfoTable.SYNC_STATUS+ " TEXT,"
                     + AppInfoTable.SYNC_TIME+ " TEXT" + ");";
 

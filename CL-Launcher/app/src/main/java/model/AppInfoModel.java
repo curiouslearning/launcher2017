@@ -21,6 +21,19 @@ public class AppInfoModel {
     @Expose
     private boolean isDownloaded;
 
+
+    public boolean isDownloadedFailed() {
+        return isDownloadedFailed;
+    }
+
+    public void setDownloadedFailed(boolean downloadedFailed) {
+        isDownloadedFailed = downloadedFailed;
+    }
+
+    @SerializedName("isDownloadedFailed")
+    @Expose
+    private boolean isDownloadedFailed;
+
     @SerializedName("isInstalled")
     @Expose
     private boolean isInstalled;

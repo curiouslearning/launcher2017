@@ -22,6 +22,7 @@ package excelsoft.com.cl_launcher;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.WallpaperManager;
@@ -35,6 +36,7 @@ import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
@@ -82,6 +84,7 @@ import com.google.gson.JsonObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,6 +96,7 @@ import java.util.TimerTask;
 
 import adapter.AppInfoAdapter;
 import apihandler.ApiClient;
+import apihandler.ApiConstant;
 import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
 import backgroundservice.AppUsageAlarmReceiver;
@@ -113,6 +117,7 @@ import util.LogUtil;
 import util.UStats;
 import util.Utils;
 
+import static adapter.AppInfoAdapter.appUpdateTime;
 import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static permission_manager.PermissionHandler.checkIfAlreadyhavePermission;
 import static permission_manager.PermissionHandler.requestForSpecificPermission;
@@ -158,6 +163,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private final BroadcastReceiver mApplicationsReceiver = new ApplicationsIntentReceiver();
     private final BroadcastReceiver mInAppDataCollectionReceiver = new InAppDataCollectionReceiver();
 
+
    /* private GridView mGrid;
     private ApplicationsAdapter applicationsAdapter;*/
 
@@ -194,7 +200,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private ArrayList<AppInfoModel> appInfoList = new ArrayList<>();
     private RecyclerView mRcRecyclerView;
     private GridLayoutManager lLayout;
-   // private DBAdapter mDbAdapter;
+    // private DBAdapter mDbAdapter;
     private APPInfoDB appInfoDB;
     private AppInfoTable mAppInfoTable;
     private int initialAppInfoCountFromDb = 0;
@@ -202,12 +208,22 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private HomeKeyLocker mHomeKeyLocker;
     private Timer timerTask = null;
     public static final String clPckgName = "com.excelsoft.cl-launcher";
+    HashMap<Long,AppInfoModel> downLoadMap = new HashMap<>();
+    HashMap<Long,Integer> downLoadMapPosition = new HashMap<>();
+    HashMap<String,Long> downLoadIdMap = new HashMap<>();
+    private DownloadManager downloadManager;
+    private static final long NOTIFY_DELAY_TIME = 1000L;
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
         allFunctionalInitiationAction();
+        try {
+            Utils.showToast(this, "version : "+Utils.getVersionName(this));
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -227,6 +243,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         refreshImg.setOnClickListener(this);
         settingManager = SettingManager.getInstance(this);
         apiService = ApiClient.getClient().create(ApiInterface.class);
+        downloadManager = (DownloadManager)getSystemService(Context.DOWNLOAD_SERVICE);
 
     }
 
@@ -398,6 +415,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
         super.onResume();
         //  bindRecents();
         registerReceiver(mScreenStateReceiver, screenStateFilter);
+        registerReceiver(downLoadreceiver, new IntentFilter(
+                DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         Log.i(TAG,"onResume called");
     }
 
@@ -449,6 +468,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
         mRcRecyclerView.addItemDecoration(new GridSpacingItemDecoration(spanCount, Utils.dpToPx(this,10), true));
         mRcRecyclerView.setItemAnimator(new DefaultItemAnimator());
         appInfoAdapter = new AppInfoAdapter(this, appInfoList);
+        appInfoAdapter.setOnItemDownLoadStartListener(onItemDownLoadStartListener);
+        appInfoAdapter.setOnItemClickListener(onItemClickListener);
         mRcRecyclerView.setAdapter(appInfoAdapter);
         showApplications(true);
        /* if (mApplicationsStack == null) {
@@ -917,7 +938,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                         mAppInfoTable.updateAppUpdateAvailableInfo(added_package,Constants.UPDATE_NOT_AVAILABLE);
 
                     if(added_package.equals(clPckgName)){
-                      //  stopTimer();
+                        //  stopTimer();
                     }
                 }
             }
@@ -1578,7 +1599,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model.setTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
                 model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
                 if(jsonAppObject.has(Constants.KEY_TYPE))
-                model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
+                    model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
                 model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
                 model.setDownloaded(false);
                 model.setInstalled(false);
@@ -1655,21 +1676,21 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     public void checkAndStartUpdatCLAPP(){
         if(packageMap.get(clPckgName).getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE){
-          // startTimer();
+            // startTimer();
             Utils.installAPK(Home.this,"CL-Launcher");
         }
     }
 
     private void startTimer() {
-            if (timerTask == null) {
-                timerTask = new Timer();
-                timerTask.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        Utils.installAPK(Home.this,"CL-Launcher");
-                    }
-                }, 0, AppInfoAdapter.appUpdateTime);
-            }
+        if (timerTask == null) {
+            timerTask = new Timer();
+            timerTask.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    Utils.installAPK(Home.this,"CL-Launcher");
+                }
+            }, 0, appUpdateTime);
+        }
     }
 
     private void stopTimer() {
@@ -1680,5 +1701,230 @@ public class Home extends BaseActivity implements View.OnClickListener{
         }
     }
 
+
+
+    public BroadcastReceiver downLoadreceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            AppInfoModel model;
+            String action = intent.getAction();
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
+                long downloadId = intent.getLongExtra(
+                        DownloadManager.EXTRA_DOWNLOAD_ID, 0);
+                DownloadManager.Query query = new DownloadManager.Query();
+                query.setFilterById(downloadId);
+                Cursor cursor = downloadManager.query(query);
+                int cursorCount = cursor.getCount();
+                if (cursorCount > 0) {
+                    cursor.moveToFirst();
+                    int downloadedStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                    if (downloadedStatus == DownloadManager.STATUS_SUCCESSFUL) {
+
+                        model = downLoadMap.get(downloadId);
+                        if(model!=null) {
+                            LogUtil.createLog("onDownloadComplete ::", model.getTitle());
+                           final int position = downLoadMapPosition.get(downloadId);
+                            if (updateDownloadInfo(model.getId(), true)) {
+                                model.setDownloaded(true);
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        appInfoAdapter.notifyItemChanged(position);
+                                    }
+                                },NOTIFY_DELAY_TIME);
+
+                            }
+
+                            if (model.getType() == null) {
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        checkAndStartUpdatCLAPP();
+                                    }
+                                }, appUpdateTime);
+
+                            }
+                            if (downLoadMapPosition.size() > 0)
+                                downLoadMapPosition.remove(downloadId);
+                            if (downLoadMap.size() > 0)
+                                downLoadMap.remove(downloadId);
+                        }
+
+                    }else if (downloadedStatus == DownloadManager.STATUS_FAILED) {
+
+                        model = downLoadMap.get(downloadId);
+                        if(model!=null) {
+                            LogUtil.createLog("onDownloadFailed ::", model.getTitle());
+                            final int position = downLoadMapPosition.get(downloadId);
+                            downLoadIdMap.put(model.getAppPckageName(), downloadId);
+                            if (updateDownloadInfo(model.getId(), false)) {
+                                model.setDownloaded(false);
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        appInfoAdapter.notifyItemChanged(position);
+                                    }
+                                },NOTIFY_DELAY_TIME);
+
+                                model.setDownloadedFailed(true);
+                                Utils.showToast(context, "There is problem for downloading some file.");
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    };
+
+
+
+
+
+
+
+
+    private void initDownLoad(AppInfoModel model,int position){
+        String apkDownloadUrl = ApiConstant.APK_ENDPOINT_URL+settingManager.getCL_SerialNo()+ApiConstant.APK+
+                model.getApkName();
+        //  DownloadAPKFileManger.getDownloadManager(context);
+        //  long downLoadID = DownloadAPKFileManger.startDownloadManager(context, apkDownloadUrl,model.getTitle(), Constants.APK_PATH);
+
+        long id = (downLoadIdMap.get(model.getAppPckageName())==null)?model.getId():downLoadIdMap.get(model.getAppPckageName());
+        long downloadId = startDownloadManager(id,apkDownloadUrl,model.getTitle(),settingManager.getAccessToken());
+        // myDownloadStatusListener.setModel(model,position);
+        LogUtil.createLog("startDownLoad ::",model.getTitle());
+        downLoadMap.put(downloadId,model);
+        downLoadMapPosition.put(downloadId,position);
+        downLoadIdMap.put(model.getAppPckageName(),downloadId);
+    }
+
+
+
+
+
+
+    private long startDownloadManager(long downloadID,String downloadURL, String title, String accessToken) {
+
+
+        File filesDir = new File(Constants.APK_PATH);
+        if(!filesDir.exists()){
+            filesDir.mkdir();
+        }
+
+        Uri downloadUri = Uri.parse(downloadURL);
+        Uri destinationUri = Uri.parse(filesDir+"/"+title+".apk");
+
+
+        File destinationUriFile = new File(destinationUri.toString());
+        if(destinationUriFile.exists()){
+            destinationUriFile.delete();
+            LogUtil.createLog("File delete before download",destinationUri.toString());
+        }
+
+
+        DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+        request.setTitle(title);
+        request.addRequestHeader(ApiConstant.AUTHORIZATION, ApiConstant.BEARER+" "+accessToken);
+        request.setDestinationUri(Uri.fromFile(destinationUriFile));
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+
+        if(!checkDownloadSuceesStatus(downloadID)) {
+            downloadID = downloadManager.enqueue(request);
+        }
+        return downloadID;
+    }
+
+
+    private boolean checkDownloadSuceesStatus(long downloadId) {
+        Cursor cursor = null;
+        try {
+            DownloadManager.Query downloadQuery = new DownloadManager.Query();
+            downloadQuery.setFilterById(downloadId);
+            cursor = downloadManager.query(downloadQuery);
+            int cursorCount = cursor.getCount();
+            if (cursorCount > 0) {
+                cursor.moveToFirst();
+                int downloadedStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                if (downloadedStatus == DownloadManager.STATUS_SUCCESSFUL) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            cursor.close();
+        }
+
+        return false;
+    }
+
+
+
+    AppInfoAdapter.OnItemDownLoadStartListener onItemDownLoadStartListener = new AppInfoAdapter.OnItemDownLoadStartListener() {
+        @Override
+        public void onStartDownLoad(int position) {
+
+            AppInfoModel model = appInfoList.get(position);
+            initDownLoad(model,position);
+
+        }
+    };
+
+
+    AppInfoAdapter.OnItemClickListener onItemClickListener = new AppInfoAdapter.OnItemClickListener() {
+        @Override
+        public void onClick(int position) {
+            AppInfoModel model = appInfoList.get(position);
+            if(model.isInstalled()){
+                if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE&&model.isDownloaded()){
+                    Utils.installAPK(Home.this,model.getTitle());
+                }else{
+                    startActivity(model.getIntent());
+                }
+            }else {
+                if(model.isDownloaded()){
+                    Utils.installAPK(Home.this,model.getTitle());
+                }else {
+                    Utils.showToast(Home.this, getResources().getString(R.string.downloading_in_progress));
+                }
+            }
+        }
+    };
+
+
+
+  /* private void checkForDownLoadApk(ArrayList<AppInfoModel> appList){
+        if(appList!=null&&appList.size()>0){
+            for (AppInfoModel model:
+                 appList) {
+                if(model.isInstalled()) {
+                    if(model.getIsUpdateVersionExist()==1&&!model.isDownloaded()){
+                        //if(onItemDownLoadStartListener!=null)
+                            onItemDownLoadStartListener.onStartDownLoad(position);
+                        initDownLoad(model);
+                    }
+
+                }else{
+
+                    if(model.isDownloaded()) {
+                        holder.loader.setVisibility(View.GONE);
+                        holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_install));
+                    }else if(model.isDownloadedFailed()) {
+                        holder.loader.setVisibility(View.GONE);
+                        holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
+                    }else{
+
+                        holder.loader.setVisibility(View.VISIBLE);
+                        holder.icon.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
+                        if(onItemDownLoadStartListener!=null)
+                            onItemDownLoadStartListener.onStartDownLoad(position);
+                    }
+                }
+            }
+        }
+    }
+*/
 
 }

@@ -59,16 +59,17 @@ public class MemoryUsage {
         private String androidVersion;
         @SerializedName("space_available")
         @Expose
-        private String spaceAvailable;
+        private String spaceAvailable_kb;
+
         @SerializedName("space_in_use")
         @Expose
-        private String spaceInUse;
+        private String spaceInUse_kb;
         @SerializedName("cl_software_space")
         @Expose
-        private String clSoftwareSpace;
+        private String clSoftwareSpace_kb;
         @SerializedName("cl_data_space")
         @Expose
-        private String clDataSpace;
+        private String clDataSpace_kb;
 
         public String getTabletID() {
             return tabletID;
@@ -94,36 +95,36 @@ public class MemoryUsage {
             this.androidVersion = androidVersion;
         }
 
-        public String getSpaceAvailable() {
-            return spaceAvailable;
+        public String getSpaceAvailable_kb() {
+            return spaceAvailable_kb;
         }
 
-        public void setSpaceAvailable(String spaceAvailable) {
-            this.spaceAvailable = spaceAvailable;
+        public void setSpaceAvailable_kb(String spaceAvailable_kb) {
+            this.spaceAvailable_kb = spaceAvailable_kb;
         }
 
-        public String getSpaceInUse() {
-            return spaceInUse;
+        public String getSpaceInUse_kb() {
+            return spaceInUse_kb;
         }
 
-        public void setSpaceInUse(String spaceInUse) {
-            this.spaceInUse = spaceInUse;
+        public void setSpaceInUse_kb(String spaceInUse_kb) {
+            this.spaceInUse_kb = spaceInUse_kb;
         }
 
-        public String getClSoftwareSpace() {
-            return clSoftwareSpace;
+        public String getClSoftwareSpace_kb() {
+            return clSoftwareSpace_kb;
         }
 
-        public void setClSoftwareSpace(String clSoftwareSpace) {
-            this.clSoftwareSpace = clSoftwareSpace;
+        public void setClSoftwareSpace_kb(String clSoftwareSpace_kb) {
+            this.clSoftwareSpace_kb = clSoftwareSpace_kb;
         }
 
-        public String getClDataSpace() {
-            return clDataSpace;
+        public String getClDataSpace_kb() {
+            return clDataSpace_kb;
         }
 
-        public void setClDataSpace(String clDataSpace) {
-            this.clDataSpace = clDataSpace;
+        public void setClDataSpace_kb(String clDataSpace_kb) {
+            this.clDataSpace_kb = clDataSpace_kb;
         }
 
     }

@@ -46,6 +46,10 @@ public class AppInfoTable {
     public static final String SYNC_TIME = "sync_time";
     public static final String AVAILABLE_UPDATE_VERSION = "updateVersion";
 
+    public static final String UPDATE_VERSION = "update_version";
+    public static final String IS_UPDATED = "is_updated";
+    public static final String MISC = "misc";
+
     private final String  TAG = "AppInfoTable";
 
 
@@ -271,6 +275,10 @@ public class AppInfoTable {
                                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
                 model.setIcon(info.activityInfo.loadIcon(manager));
                 model.setInstalled(true);
+                updateAppInstallationInfo(model.getId(),true);
+                //need to change later
+                model.setDownloaded(true);
+                updateAppDownLoadInfo(model.getId(),true);
                 break;
             }
         }
