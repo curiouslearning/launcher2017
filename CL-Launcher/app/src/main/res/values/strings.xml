@@ -33,6 +33,10 @@
     <string name="cl_db_name">CL_Launcher</string>
     <string name="cl_db">CL_DB</string>
     <string name="wifi_text">Set Wi-Fi</string>
+    <string name="cl_launcher_update_text">Update Cl-Launcher</string>
+    <string name="tablet_id">Tablet Id : </string>
+    <string name="manifest_version">Manifest Version : </string>
+    <string name="launcher_version">Launcher Version : </string>
 
 
 </resources>

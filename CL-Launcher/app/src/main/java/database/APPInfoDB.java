@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.io.File;
 
 import util.Constants;
+import util.LogUtil;
 
 /**
  * Created by IMFCORP\alok.acharya on 21/3/17.
@@ -19,7 +20,6 @@ public class APPInfoDB {
 
     public static final int DATABASE_VERSION = 1;
 
-
     private static final String CREATE_TABLE_APP_INFO =
             "create table AppInfo (_id integer primary key autoincrement, "
                     + AppInfoTable.APP_ID+ " integer,"
@@ -30,18 +30,75 @@ public class APPInfoDB {
                     + AppInfoTable.APP_TYPE+ " TEXT,"
                     + AppInfoTable.APP_IS_VISIBLE+ " integer,"
                     + AppInfoTable.APP_VERSION+ " TEXT,"
-                    + AppInfoTable.APP_IS_DOWNLOADED+ " TEXT,"
-                    + AppInfoTable.APP_IS_INSTALLED+ " TEXT,"
+                    + AppInfoTable.APP_DOWNLOAD_STATUS + " TEXT,"
+                    + AppInfoTable.APP_INSTALATION_STATUS + " TEXT,"
                     + AppInfoTable.APP_APK_LOCAL_PATH+ " TEXT,"
-                    + AppInfoTable.AVAILABLE_UPDATE_VERSION+ " integer,"
-                    + AppInfoTable.UPDATE_VERSION+ " TEXT,"
+                    + AppInfoTable.APP_UPDATE_VERSION + " integer,"
+                    + AppInfoTable.UPDATE_AVAILABLE_STATUS + " TEXT,"
                     + AppInfoTable.IS_UPDATED+ " TEXT,"
                     + AppInfoTable.MISC+ " integer,"
                     + AppInfoTable.SYNC_STATUS+ " TEXT,"
-                    + AppInfoTable.SYNC_TIME+ " TEXT" + ");";
+                    + AppInfoTable.SYNC_TIME+ " TEXT,"
+                    + AppInfoTable.INSTALLATION_PROCESS_INITIATE_STATUS+ " TEXT,"
+                    + AppInfoTable.DOWNLOAD_ID+ " TEXT" + ");";
 
 
 
+ /*
+   installedVersion
+    public static final String APP_VERSION = "appVersion";
+
+    downloadStatus
+    public static final String APP_IS_DOWNLOADED = "isDownLoaded";
+
+    instalationStatus
+    public static final String APP_IS_INSTALLED = "isInstalled";
+
+update_available_status
+    public static final String UPDATE_VERSION = "update_version";
+    ;*/
+
+
+
+    private static final String RENAME_APP_INFO_TABLE_TO_TEMP_NAME = "ALTER TABLE AppInfo RENAME TO AppInfo_temp";
+    private static final String COPY_APPINFO_TEMP_TABLE_TO_APPINFO = "INSERT INTO AppInfo ("
+            + AppInfoTable.APP_ID+ ","
+            + AppInfoTable.APP_TITLE+ ","
+            + AppInfoTable.APP_PACKAGE_NAME+ ","
+            + AppInfoTable.APP_APK_DOWNLOAD_PATH+ ","
+            + AppInfoTable.APP_CONTENT_TYPE+ ","
+            + AppInfoTable.APP_TYPE+ ","
+            + AppInfoTable.APP_IS_VISIBLE+ ","
+            + AppInfoTable.APP_VERSION+ ","
+            + AppInfoTable.APP_DOWNLOAD_STATUS+ ","
+            + AppInfoTable.APP_INSTALATION_STATUS+ " ,"
+            + AppInfoTable.APP_APK_LOCAL_PATH+ ","
+            + AppInfoTable.APP_UPDATE_VERSION+ ","
+            + AppInfoTable.UPDATE_AVAILABLE_STATUS+ ","
+            + AppInfoTable.IS_UPDATED+ ","
+            + AppInfoTable.MISC+ ","
+            + AppInfoTable.SYNC_STATUS+ ","
+            + AppInfoTable.SYNC_TIME+ ")"
+            +" SELECT "
+            + AppInfoTable.APP_ID+ ","
+            + AppInfoTable.APP_TITLE+ ","
+            + AppInfoTable.APP_PACKAGE_NAME+ ","
+            + AppInfoTable.APP_APK_DOWNLOAD_PATH+ ","
+            + AppInfoTable.APP_CONTENT_TYPE+ ","
+            + AppInfoTable.APP_TYPE+ ","
+            + AppInfoTable.APP_IS_VISIBLE+ ","
+            +  "appVersion,"
+            + "isDownLoaded,"
+            + "isInstalled,"
+            + AppInfoTable.APP_APK_LOCAL_PATH+ ","
+            + AppInfoTable.APP_UPDATE_VERSION+ ","
+            + "update_version,"
+            + AppInfoTable.IS_UPDATED+ ","
+            + AppInfoTable.MISC+ ","
+            + AppInfoTable.SYNC_STATUS+ ","
+            + AppInfoTable.SYNC_TIME+ " FROM AppInfo_temp;";
+
+    private static final String DROP_TABLE_TEMP_APPINFO_TABLE = "DROP TABLE AppInfo_temp;";
 
     private final Context context;
     private DatabaseHelper DBHelper;
@@ -72,6 +129,7 @@ public class APPInfoDB {
         {
 
             db.execSQL(CREATE_TABLE_APP_INFO);
+            LogUtil.createLog("DATABASE :",COPY_APPINFO_TEMP_TABLE_TO_APPINFO+":: "+CREATE_TABLE_APP_INFO);
         }
 
         @Override
@@ -106,5 +164,11 @@ public class APPInfoDB {
 
     public boolean isOpen(){
         return this.db.isOpen();
+    }
+
+
+    public void upgradeDBTo2Version(SQLiteDatabase db){
+
+
     }
 }

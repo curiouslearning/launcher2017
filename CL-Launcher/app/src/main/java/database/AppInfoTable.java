@@ -38,21 +38,20 @@ public class AppInfoTable {
     public static final String APP_CONTENT_TYPE = "app_contentType";
     public static final String APP_TYPE = "app_type";
     public static final String APP_IS_VISIBLE = "isVisible";
-    public static final String APP_VERSION = "appVersion";
-    public static final String APP_IS_DOWNLOADED = "isDownLoaded";
-    public static final String APP_IS_INSTALLED = "isInstalled";
+    public static final String APP_VERSION = "installedVersion";
+    public static final String APP_DOWNLOAD_STATUS = "downloadStatus";
+    public static final String APP_INSTALATION_STATUS = "instalationStatus";
     public static final String APP_APK_LOCAL_PATH = "appLocalPath";
     public static final String SYNC_STATUS = "sync_status";
     public static final String SYNC_TIME = "sync_time";
-    public static final String AVAILABLE_UPDATE_VERSION = "updateVersion";
-
-    public static final String UPDATE_VERSION = "update_version";
+    public static final String APP_UPDATE_VERSION = "updateVersion";
+    public static final String UPDATE_AVAILABLE_STATUS = "update_available_status";
     public static final String IS_UPDATED = "is_updated";
+    public static final String DOWNLOAD_ID = "downloadId";
+    public static final String INSTALLATION_PROCESS_INITIATE_STATUS = "installationProcessInitiateStatus";
     public static final String MISC = "misc";
 
     private final String  TAG = "AppInfoTable";
-
-
 
     private static final String APP_INFO_TABLE = "AppInfo";
 
@@ -133,12 +132,12 @@ public class AppInfoTable {
         initialValues.put(APP_TYPE, info.getType());
         initialValues.put(APP_IS_VISIBLE, info.getVisible());
         initialValues.put(APP_VERSION, info.getVersion());
-        initialValues.put(APP_IS_DOWNLOADED, ""+info.isDownloaded());
-        initialValues.put(APP_IS_INSTALLED, ""+info.isInstalled());
+        initialValues.put(APP_DOWNLOAD_STATUS, ""+info.isDownloaded());
+        initialValues.put(APP_INSTALATION_STATUS, ""+info.isInstalled());
         initialValues.put(APP_APK_LOCAL_PATH, info.getLocalPath());
         initialValues.put(SYNC_STATUS,"");
         initialValues.put(SYNC_TIME,"");
-        initialValues.put(AVAILABLE_UPDATE_VERSION,info.getIsUpdateVersionExist());
+        initialValues.put(APP_UPDATE_VERSION,info.getIsUpdateVersionExist());
         return this.mDb.insert(APP_INFO_TABLE, null, initialValues);
     }
 
@@ -155,12 +154,12 @@ public class AppInfoTable {
         initialValues.put(APP_TYPE, info.getType());
         initialValues.put(APP_IS_VISIBLE, info.getVisible());
         initialValues.put(APP_VERSION, info.getVersion());
-        initialValues.put(APP_IS_DOWNLOADED, ""+info.isDownloaded());
-        initialValues.put(APP_IS_INSTALLED, ""+info.isInstalled());
+        initialValues.put(APP_DOWNLOAD_STATUS, ""+info.isDownloaded());
+        initialValues.put(APP_INSTALATION_STATUS, ""+info.isInstalled());
         initialValues.put(APP_APK_LOCAL_PATH, info.getLocalPath());
         initialValues.put(SYNC_STATUS,"");
         initialValues.put(SYNC_TIME,"");
-        initialValues.put(AVAILABLE_UPDATE_VERSION,info.getIsUpdateVersionExist());
+        initialValues.put(APP_UPDATE_VERSION,info.getIsUpdateVersionExist());
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + info.getId(), null) >0;
     }
 
@@ -168,7 +167,7 @@ public class AppInfoTable {
 
         System.out.println("updating data into  data base...");
         ContentValues initialValues = new ContentValues();
-        initialValues.put(APP_IS_INSTALLED, ""+installStatus);
+        initialValues.put(APP_INSTALATION_STATUS, ""+installStatus);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
     }
 
@@ -176,7 +175,7 @@ public class AppInfoTable {
 
         System.out.println("updating updateAppUpdateAvailableInfo into  data base..."+status);
         ContentValues initialValues = new ContentValues();
-        initialValues.put(AVAILABLE_UPDATE_VERSION, status);
+        initialValues.put(APP_UPDATE_VERSION, status);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_PACKAGE_NAME + " = " + "?", new String[]{packageId}) >0;
     }
 
@@ -194,7 +193,7 @@ public class AppInfoTable {
 
         System.out.println("updating data into  data base...");
         ContentValues initialValues = new ContentValues();
-        initialValues.put(APP_IS_DOWNLOADED, ""+downloadStatus);
+        initialValues.put(APP_DOWNLOAD_STATUS, ""+downloadStatus);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
     }
 

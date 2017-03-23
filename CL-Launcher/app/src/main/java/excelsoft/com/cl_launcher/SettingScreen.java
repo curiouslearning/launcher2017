@@ -3,6 +3,7 @@ package excelsoft.com.cl_launcher;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
@@ -20,9 +21,13 @@ import android.widget.TextView;
 
 import device_admin_utill.CLDeviceManger;
 import device_admin_utill.DevicePolicyAdmin;
+import model.AppInfoModel;
 import preference_manger.SettingManager;
 import util.Constants;
 import util.Utils;
+
+import static excelsoft.com.cl_launcher.Home.clPckgName;
+import static excelsoft.com.cl_launcher.Home.packageMap;
 
 public class SettingScreen extends AppCompatActivity implements
         RadioGroup.OnCheckedChangeListener,View.OnClickListener,Switch.OnCheckedChangeListener {
@@ -38,8 +43,7 @@ public class SettingScreen extends AppCompatActivity implements
     private SettingManager settingManager;
     private TextView txtMsg;
     private Switch mSwitch;
-
-
+    private TextView updateLauncherTxt,tabletIdTxt,manifestVersionTxt,launcherVersionTxt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +59,10 @@ public class SettingScreen extends AppCompatActivity implements
         edPwd = (EditText) findViewById(R.id.ed_pwd);
         edCpwd = (EditText) findViewById(R.id.ed_cpwd);
         txtMsg = (TextView) findViewById(R.id.textViewMsg);
+        updateLauncherTxt = (TextView) findViewById(R.id.setting_Cl_update);
+        tabletIdTxt= (TextView) findViewById(R.id.setting_tablet_id);
+        manifestVersionTxt= (TextView) findViewById(R.id.setting_manifest_version);
+        launcherVersionTxt= (TextView) findViewById(R.id.setting_launcher_version);
         cancelPwdBtn = (Button) findViewById(R.id.btn_CancelPwd);
         mSwitch = (Switch) findViewById(R.id.setting_restrictHome_screenTxtSwitch);
 
@@ -62,7 +70,7 @@ public class SettingScreen extends AppCompatActivity implements
 
         compName = new ComponentName(this, DevicePolicyAdmin.class);
         deviceManger = CLDeviceManger.getCLDevicePolicyManager(this);
-
+        updateLauncherText();
 
         if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_DEFAULT)){
             dfltPwd.setChecked(true);
@@ -78,14 +86,33 @@ public class SettingScreen extends AppCompatActivity implements
 
         }
         mSwitch.setChecked(settingManager.getRestrictSettingScreen());
-
-
-
+        tabletIdTxt.setText(getResources().getString(R.string.tablet_id)+Utils.getDeviceId(this));
+        try {
+            launcherVersionTxt.setText(getResources().getString(R.string.launcher_version)+Utils.getVersionName(this));
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        manifestVersionTxt.setText(getResources().getString(R.string.manifest_version)+settingManager.getManifestVersion());
 
         pwdRadioGrp.setOnCheckedChangeListener(this);
         mSwitch.setOnCheckedChangeListener(this);
         savePwdBtn.setOnClickListener(this);
         cancelPwdBtn.setOnClickListener(this);
+        updateLauncherTxt.setOnClickListener(this);
+    }
+
+
+
+    private void updateLauncherText(){
+        AppInfoModel appInfoModel = packageMap.get(clPckgName);
+        if(appInfoModel.isDownloaded()&&
+                appInfoModel.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE){
+            updateLauncherTxt.setTextColor(getResources().getColor(R.color.black));
+            updateLauncherTxt.setEnabled(true);
+        }else{
+            updateLauncherTxt.setTextColor(getResources().getColor(R.color.devider_color));
+            updateLauncherTxt.setEnabled(false);
+        }
     }
 
     @Override
@@ -106,6 +133,12 @@ public class SettingScreen extends AppCompatActivity implements
                 mSwitch.setEnabled(true);
                 mSwitch.setChecked(settingManager.getRestrictSettingScreen());
                 doForAndroidPinLock();
+                break;
+            case R.id.setting_Cl_update:
+                if(packageMap.get(clPckgName).getIsUpdateVersionExist()
+                        ==Constants.UPDATE_AVAILABLE){
+                    Utils.installAPK(SettingScreen.this,"CL-Launcher");
+                }
                 break;
 
 
@@ -245,7 +278,7 @@ public class SettingScreen extends AppCompatActivity implements
             boolean active = deviceManger.isAdminActive(compName);
             if (active) {
                 // if available then lock
-               // deviceManger.lockNow();
+                // deviceManger.lockNow();
                 settingManager.setEnablePasswordFormat(Constants.PWD_ANDROID);
 
             }

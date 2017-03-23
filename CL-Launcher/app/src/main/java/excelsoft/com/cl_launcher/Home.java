@@ -204,7 +204,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private APPInfoDB appInfoDB;
     private AppInfoTable mAppInfoTable;
     private int initialAppInfoCountFromDb = 0;
-    private HashMap<String,AppInfoModel > packageMap = new HashMap<>();
+    public static HashMap<String,AppInfoModel > packageMap = new HashMap<>();
     private HomeKeyLocker mHomeKeyLocker;
     private Timer timerTask = null;
     public static final String clPckgName = "com.excelsoft.cl-launcher";
@@ -1605,6 +1605,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model.setInstalled(false);
                 model.setIcon(getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
                 model.setVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString());
+                if(i==apps.size()-1)
+                    model.setVersion("2.3.3");
                 doInsertUpdateProcess(model);
             }
 
@@ -1674,12 +1676,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
 
-    public void checkAndStartUpdatCLAPP(){
-        if(packageMap.get(clPckgName).getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE){
-            // startTimer();
-            Utils.installAPK(Home.this,"CL-Launcher");
-        }
-    }
+
 
     private void startTimer() {
         if (timerTask == null) {
@@ -1735,15 +1732,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                             }
 
-                            if (model.getType() == null) {
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        checkAndStartUpdatCLAPP();
-                                    }
-                                }, appUpdateTime);
 
-                            }
                             if (downLoadMapPosition.size() > 0)
                                 downLoadMapPosition.remove(downloadId);
                             if (downLoadMap.size() > 0)
@@ -1827,7 +1816,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         request.setTitle(title);
         request.addRequestHeader(ApiConstant.AUTHORIZATION, ApiConstant.BEARER+" "+accessToken);
         request.setDestinationUri(Uri.fromFile(destinationUriFile));
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+       // request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
 
         if(!checkDownloadSuceesStatus(downloadID)) {
             downloadID = downloadManager.enqueue(request);
