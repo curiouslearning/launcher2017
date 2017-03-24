@@ -18,10 +18,10 @@ public class APPInfoDB {
 
     public static final String DATABASE_NAME = "APP_Info_DB";
 
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
 
     private static final String CREATE_TABLE_APP_INFO =
-            "create table AppInfo (_id integer primary key autoincrement, "
+            "create table if not exists AppInfo (_id integer primary key autoincrement, "
                     + AppInfoTable.APP_ID+ " integer,"
                     + AppInfoTable.APP_TITLE+ " TEXT,"
                     + AppInfoTable.APP_PACKAGE_NAME+ " TEXT,"
@@ -40,27 +40,10 @@ public class APPInfoDB {
                     + AppInfoTable.SYNC_STATUS+ " TEXT,"
                     + AppInfoTable.SYNC_TIME+ " TEXT,"
                     + AppInfoTable.INSTALLATION_PROCESS_INITIATE_STATUS+ " TEXT,"
-                    + AppInfoTable.DOWNLOAD_ID+ " TEXT" + ");";
-
-
-
- /*
-   installedVersion
-    public static final String APP_VERSION = "appVersion";
-
-    downloadStatus
-    public static final String APP_IS_DOWNLOADED = "isDownLoaded";
-
-    instalationStatus
-    public static final String APP_IS_INSTALLED = "isInstalled";
-
-update_available_status
-    public static final String UPDATE_VERSION = "update_version";
-    ;*/
-
-
+                    + AppInfoTable.DOWNLOAD_ID+ " integer" + ");";
 
     private static final String RENAME_APP_INFO_TABLE_TO_TEMP_NAME = "ALTER TABLE AppInfo RENAME TO AppInfo_temp";
+
     private static final String COPY_APPINFO_TEMP_TABLE_TO_APPINFO = "INSERT INTO AppInfo ("
             + AppInfoTable.APP_ID+ ","
             + AppInfoTable.APP_TITLE+ ","
@@ -116,12 +99,16 @@ update_available_status
 
     private static class DatabaseHelper extends SQLiteOpenHelper
     {
+        private  Context mcontext;
+
         DatabaseHelper(Context context)
         {
+
             //super(context, DATABASE_NAME, null, DATABASE_VERSION);
             super(context, Constants.DATABASE_FILE_PATH
                     + File.separator + "CL_APP_INFO_DB"
                     + File.separator + DATABASE_NAME, null, DATABASE_VERSION);
+            this.mcontext = context;
         }
 
         @Override
@@ -137,6 +124,35 @@ update_available_status
                               int newVersion)
         {
             // Adding any table mods to this guy here
+            LogUtil.createLog("onUpgrade DB ::","old Version : "+oldVersion+" New Version :"+newVersion);
+            switch (oldVersion){
+                case 1:
+                    upgradeDBTo2Version(db);
+                    break;
+            }
+        }
+
+
+
+        private void upgradeDBTo2Version(SQLiteDatabase db){
+
+            db.beginTransaction();
+            try {
+                db.execSQL(RENAME_APP_INFO_TABLE_TO_TEMP_NAME);
+                db.execSQL(CREATE_TABLE_APP_INFO);
+                db.execSQL(COPY_APPINFO_TEMP_TABLE_TO_APPINFO);
+                db.execSQL(DROP_TABLE_TEMP_APPINFO_TABLE);
+                db.setTransactionSuccessful();
+
+            }catch (Exception e){
+
+                e.printStackTrace();
+                db.endTransaction();
+            }
+            finally {
+                db.endTransaction();
+            }
+
         }
     }
 
@@ -167,8 +183,5 @@ update_available_status
     }
 
 
-    public void upgradeDBTo2Version(SQLiteDatabase db){
 
-
-    }
 }

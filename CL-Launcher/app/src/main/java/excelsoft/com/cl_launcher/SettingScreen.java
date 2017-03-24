@@ -38,12 +38,13 @@ public class SettingScreen extends AppCompatActivity implements
     private View llPwdView;
     private RadioButton dfltPwd,clPwd,devicePwd;
     private RadioGroup pwdRadioGrp;
-    private Button savePwdBtn,cancelPwdBtn;
+    private Button savePwdBtn,cancelPwdBtn,updateLauncherButton,cleanUpButton;
     private EditText edPwd,edCpwd;
     private SettingManager settingManager;
     private TextView txtMsg;
     private Switch mSwitch;
-    private TextView updateLauncherTxt,tabletIdTxt,manifestVersionTxt,launcherVersionTxt;
+    private TextView tabletIdTxt,manifestVersionTxt,launcherVersionTxt;
+    public static final String CLEAN_UP_ACTION = "app_clean_up";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +60,8 @@ public class SettingScreen extends AppCompatActivity implements
         edPwd = (EditText) findViewById(R.id.ed_pwd);
         edCpwd = (EditText) findViewById(R.id.ed_cpwd);
         txtMsg = (TextView) findViewById(R.id.textViewMsg);
-        updateLauncherTxt = (TextView) findViewById(R.id.setting_Cl_update);
+        updateLauncherButton = (Button) findViewById(R.id.setting_Cl_update);
+        cleanUpButton = (Button) findViewById(R.id.setting_app_clean_up);
         tabletIdTxt= (TextView) findViewById(R.id.setting_tablet_id);
         manifestVersionTxt= (TextView) findViewById(R.id.setting_manifest_version);
         launcherVersionTxt= (TextView) findViewById(R.id.setting_launcher_version);
@@ -98,20 +100,21 @@ public class SettingScreen extends AppCompatActivity implements
         mSwitch.setOnCheckedChangeListener(this);
         savePwdBtn.setOnClickListener(this);
         cancelPwdBtn.setOnClickListener(this);
-        updateLauncherTxt.setOnClickListener(this);
+        updateLauncherButton.setOnClickListener(this);
+        cleanUpButton.setOnClickListener(this);
     }
 
 
 
     private void updateLauncherText(){
         AppInfoModel appInfoModel = packageMap.get(clPckgName);
-        if(appInfoModel.isDownloaded()&&
+        if(appInfoModel.getDownloadStatus()==Constants.ACTION_DOWNLOAD_COMPLETED&&
                 appInfoModel.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE){
-            updateLauncherTxt.setTextColor(getResources().getColor(R.color.black));
-            updateLauncherTxt.setEnabled(true);
+            updateLauncherButton.setTextColor(getResources().getColor(R.color.black));
+            updateLauncherButton.setEnabled(true);
         }else{
-            updateLauncherTxt.setTextColor(getResources().getColor(R.color.devider_color));
-            updateLauncherTxt.setEnabled(false);
+            updateLauncherButton.setTextColor(getResources().getColor(R.color.devider_color));
+            updateLauncherButton.setEnabled(false);
         }
     }
 
@@ -134,14 +137,6 @@ public class SettingScreen extends AppCompatActivity implements
                 mSwitch.setChecked(settingManager.getRestrictSettingScreen());
                 doForAndroidPinLock();
                 break;
-            case R.id.setting_Cl_update:
-                if(packageMap.get(clPckgName).getIsUpdateVersionExist()
-                        ==Constants.UPDATE_AVAILABLE){
-                    Utils.installAPK(SettingScreen.this,"CL-Launcher");
-                }
-                break;
-
-
         }
     }
 
@@ -190,7 +185,20 @@ public class SettingScreen extends AppCompatActivity implements
             }else {
                 handleVisibilityInSaveMode();
             }
+        }else if(v.getId()==R.id.setting_Cl_update){
+                if(packageMap.get(clPckgName).getIsUpdateVersionExist()
+                        ==Constants.UPDATE_AVAILABLE){
+                    Utils.installAPK(SettingScreen.this,"CL-Launcher");
+                }
+        }else if(v.getId()==R.id.setting_app_clean_up){
+
+            sentEventHomeToAppCleanup();
         }
+    }
+
+    private void sentEventHomeToAppCleanup() {
+        Intent cleanUpaction = new Intent(CLEAN_UP_ACTION);
+        sendBroadcast(cleanUpaction);
     }
 
 

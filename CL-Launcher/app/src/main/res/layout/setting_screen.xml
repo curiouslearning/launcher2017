@@ -164,23 +164,39 @@
             android:visibility="visible"
             android:onClick="wifiClick"/>
 
-        <TextView
+        <Button
             android:id="@+id/setting_Cl_update"
             android:layout_below="@+id/setting_wifi"
             android:layout_marginTop="20dp"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cl_launcher_update_text"
             android:textColor="@color/black"
-            android:gravity="left|center_vertical"
+            android:gravity="center"
             android:layout_gravity="center"
             android:textSize="@dimen/option_item_text_size"
             android:visibility="visible"
             android:enabled="false"
             />
+
+        <Button
+            android:id="@+id/setting_app_clean_up"
+            android:layout_below="@+id/setting_Cl_update"
+            android:layout_marginTop="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cleanup_app_string"
+            android:textColor="@color/black"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textSize="@dimen/option_item_text_size"
+            android:visibility="visible"
+            android:enabled="true"
+            />
+
         <TextView
             android:id="@+id/setting_tablet_id"
-            android:layout_below="@+id/setting_Cl_update"
+            android:layout_below="@+id/setting_app_clean_up"
             android:layout_marginTop="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

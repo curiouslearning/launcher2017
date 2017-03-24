@@ -12,58 +12,123 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class AppInfoModel {
+    @SerializedName("appId")
+    @Expose
+    private Integer appId;
+
+    @SerializedName("apkDownloadPath")
+    @Expose
+    private String apkDownloadPath;
+
+   @SerializedName("file")
+    @Expose
+    private String file;
+
+    @SerializedName("appTitle")
+    @Expose
+    private String appTitle;
+
+    @SerializedName("content_type")
+    @Expose
+    private String contentType;
+
+    @SerializedName("type")
+    @Expose
+    private String type;
 
     @SerializedName("version")
     @Expose
-    private String version;
+    private String appVersion;
 
-    @SerializedName("isDownloaded")
+
+    @SerializedName("visible")
     @Expose
-    private boolean isDownloaded;
+    private Integer visible;
+
+    @SerializedName("downloadStatus")
+    @Expose
+    private int downloadStatus;
+
+    @SerializedName("instalationStatus")
+    @Expose
+    private boolean instalationStatus;
+
+    @SerializedName("isUpdateVersionExist")
+    @Expose
+    private Integer isUpdateVersionExist;
 
 
-    public boolean isDownloadedFailed() {
-        return isDownloadedFailed;
+    @SerializedName("localPath")
+    @Expose
+    private String localPath;
+
+    @SerializedName("updateVersion")
+    @Expose
+    private String updateVersion;
+
+    @SerializedName("isUpdated")
+    @Expose
+    private boolean isUpdated;
+
+
+    @SerializedName("isInstalationProcessInitiate")
+    @Expose
+    private boolean isInstalationProcessInitiate;
+
+    public long getDownloadId() {
+        return downloadId;
     }
 
-    public void setDownloadedFailed(boolean downloadedFailed) {
-        isDownloadedFailed = downloadedFailed;
+    public void setDownloadId(long downloadId) {
+        this.downloadId = downloadId;
     }
 
-    @SerializedName("isDownloadedFailed")
-    @Expose
-    private boolean isDownloadedFailed;
+    public int getDownloadStatus() {
+        return downloadStatus;
+    }
 
-    @SerializedName("isInstalled")
+    public boolean isInstalationProcessInitiate() {
+        return isInstalationProcessInitiate;
+    }
+
+    public void setInstalationProcessInitiate(boolean instalationProcessInitiate) {
+        isInstalationProcessInitiate = instalationProcessInitiate;
+    }
+
+    public boolean isUpdated() {
+        return isUpdated;
+    }
+
+    public void setUpdated(boolean updated) {
+        isUpdated = updated;
+    }
+
+    public String getUpdateVersion() {
+        return updateVersion;
+    }
+
+    public void setUpdateVersion(String updateVersion) {
+        this.updateVersion = updateVersion;
+    }
+
+    @SerializedName("downloadId")
     @Expose
-    private boolean isInstalled;
+    private long downloadId;
+
+
+
+
+
 
     @SerializedName("appPckageName")
     @Expose
     private String appPckageName;
 
-    @SerializedName("id")
-    @Expose
-    private Integer id;
 
-    @SerializedName("apkName")
-    @Expose
-    private String apkName;
-    @SerializedName("file")
-    @Expose
-    private String file;
-    @SerializedName("title")
-    @Expose
-    private String title;
-    @SerializedName("content_type")
-    @Expose
-    private String contentType;
-    @SerializedName("type")
-    @Expose
-    private String type;
-    @SerializedName("visible")
-    @Expose
-    private Integer visible;
+
+
+
+
 
     public Integer getIsUpdateVersionExist() {
         return isUpdateVersionExist;
@@ -73,9 +138,7 @@ public class AppInfoModel {
         this.isUpdateVersionExist = isUpdateVersionExist;
     }
 
-    @SerializedName("isUpdateVersionExist")
-    @Expose
-    private Integer isUpdateVersionExist;
+
 
 
     public String getLocalPath() {
@@ -86,9 +149,7 @@ public class AppInfoModel {
         this.localPath = localPath;
     }
 
-    @SerializedName("localPath")
-    @Expose
-    private String localPath;
+
 
 
 
@@ -103,47 +164,45 @@ public class AppInfoModel {
         this.appPckageName = appPckageName;
     }
 
-    public boolean isDownloaded() {
-        return isDownloaded;
+
+
+    public void setDownloadStatus(int downloadStatus) {
+        this.downloadStatus = downloadStatus;
     }
 
-    public void setDownloaded(boolean downloaded) {
-        isDownloaded = downloaded;
+    public boolean isInstalationStatus() {
+        return instalationStatus;
     }
 
-    public boolean isInstalled() {
-        return isInstalled;
+    public void setInstalationStatus(boolean instalationStatus) {
+        this.instalationStatus = instalationStatus;
     }
 
-    public void setInstalled(boolean installed) {
-        isInstalled = installed;
+    public String getAppVersion() {
+        return appVersion;
     }
 
-    public String getVersion() {
-        return version;
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public Integer getAppId() {
+        return appId;
     }
 
-    public Integer getId() {
-        return id;
+    public void setAppId(Integer appId) {
+        this.appId = appId;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public String getApkDownloadPath() {
+        return apkDownloadPath;
     }
 
-    public String getApkName() {
-        return apkName;
+    public void setApkDownloadPath(String apkDownloadPath) {
+        this.apkDownloadPath = apkDownloadPath;
     }
 
-    public void setApkName(String apkName) {
-        this.apkName = apkName;
-    }
-
-    public String getFile() {
+   public String getFile() {
         return file;
     }
 
@@ -151,12 +210,12 @@ public class AppInfoModel {
         this.file = file;
     }
 
-    public String getTitle() {
-        return title;
+    public String getAppTitle() {
+        return appTitle;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setAppTitle(String appTitle) {
+        this.appTitle = appTitle;
     }
 
     public String getContentType() {
@@ -242,7 +301,7 @@ public class AppInfoModel {
         }
 
         AppInfoModel that = (AppInfoModel) o;
-        return title.equals(that.title) &&
+        return appTitle.equals(that.appTitle) &&
                 intent.getComponent().getClassName().equals(
                         that.intent.getComponent().getClassName());
     }
@@ -250,7 +309,7 @@ public class AppInfoModel {
     @Override
     public int hashCode() {
         int result;
-        result = (title != null ? title.hashCode() : 0);
+        result = (appTitle != null ? appTitle.hashCode() : 0);
         final String name = intent.getComponent().getClassName();
         result = 31 * result + (name != null ? name.hashCode() : 0);
         return result;

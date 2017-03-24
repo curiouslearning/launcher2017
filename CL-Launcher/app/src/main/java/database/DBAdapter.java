@@ -19,7 +19,7 @@ public class DBAdapter {
 	// DATABASE ENTRY
 
 	private static final String CREATE_TABLE_APP_USAGE_INFO =
-			"create table AppUsageInfo (_id integer primary key autoincrement, "
+			"create table if not exists AppUsageInfo (_id integer primary key autoincrement, "
 					+ DeviceAppUsageTable.APP_NAME+ " TEXT,"
 					+ DeviceAppUsageTable.APP_PACKAGE_NAME+ " TEXT,"
 					+ DeviceAppUsageTable.APP_FIRST_TIMESTAMP+ " TEXT,"
@@ -34,7 +34,7 @@ public class DBAdapter {
 
 
 	private static final String CREATE_TABLE_LOCATION_INFO =
-			"create table LocationTable (_id integer primary key autoincrement, "
+			"create table if not exists LocationTable (_id integer primary key autoincrement, "
 					+ LocationTable.LATITUDE+ " TEXT,"
 					+ LocationTable.LONGITUDE+ " TEXT,"
 					+ LocationTable.ADDRESS+ " TEXT,"
@@ -45,7 +45,7 @@ public class DBAdapter {
 
 
 	private static final String CREATE_TABLE_INFO =
-			"create table BackgroundDataCollectionTable (_id integer primary key autoincrement, "
+			"create table if not exists BackgroundDataCollectionTable (_id integer primary key autoincrement, "
 					+ BackgroundDataCollectionDB.NAME+ " TEXT,"
 					+ BackgroundDataCollectionDB.TIME_STAMP+ " TEXT,"
 					+ BackgroundDataCollectionDB.JSON_DATA+ " TEXT" + ");";

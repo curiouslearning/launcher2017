@@ -16,6 +16,7 @@ import excelsoft.com.cl_launcher.Home;
 import excelsoft.com.cl_launcher.R;
 import model.AppInfoModel;
 import preference_manger.SettingManager;
+import util.Constants;
 import util.LogUtil;
 
 /**
@@ -36,6 +37,8 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
     public static final long appUpdateTime =60000L;
     OnItemDownLoadStartListener onItemDownLoadStartListener;
     OnItemClickListener onItemClickListener;
+
+
 
 
     public AppInfoAdapter(Context context,ArrayList<AppInfoModel> dataList) {
@@ -64,29 +67,35 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
     public void onBindViewHolder(CustomViewHolder holder, int position) {
         LogUtil.createLog("onBindViewHolder called",position+"");
         final AppInfoModel model = dataList.get(position);
-        holder.title.setText(model.getTitle());
-        if(model.isInstalled()) {
+        holder.title.setText(model.getAppTitle());
+
+        if(model.isInstalationStatus()) {
             holder.loader.setVisibility(View.GONE);
             holder.icon.setImageDrawable(model.getIcon());
-            if(model.getIsUpdateVersionExist()==1&&!model.isDownloaded()){
+
+            /*if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE
+                    && model.getDownloadStatus()==Constants.ACTION_NOT_DOWNLOAD_YET){
                 if(onItemDownLoadStartListener!=null)
-                onItemDownLoadStartListener.onStartDownLoad(position);
-            }
+                    onItemDownLoadStartListener.onStartDownLoad(position);
+            }*/
 
         }else{
 
-            if(model.isDownloaded()) {
+            if(model.getDownloadStatus()== Constants.ACTION_DOWNLOAD_COMPLETED) {
                 holder.loader.setVisibility(View.GONE);
                 holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_install));
-            }else if(model.isDownloadedFailed()) {
+            }else if(model.getDownloadStatus()== Constants.ACTION_DOWNLOAD_FAILED
+                    || model.getDownloadStatus()==Constants.ACTION_NOT_DOWNLOAD_YET) {
                 holder.loader.setVisibility(View.GONE);
                 holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
-            }else{
+
+            }else if(model.getDownloadStatus()== Constants.ACTION_DOWNLOAD_STARTED
+                    || model.getDownloadStatus()==Constants.ACTION_DOWNLOAD_RUNNING){
 
                 holder.loader.setVisibility(View.VISIBLE);
                 holder.icon.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
-                if(onItemDownLoadStartListener!=null)
-                onItemDownLoadStartListener.onStartDownLoad(position);
+               /* if(onItemDownLoadStartListener!=null)
+                    onItemDownLoadStartListener.onStartDownLoad(position);*/
             }
         }
 
@@ -100,15 +109,15 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
        /* holder.icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(model.isInstalled()){
-                    if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE&&model.isDownloaded()){
-                        Utils.installAPK(context,model.getTitle());
+                if(model.isInstalationStatus()){
+                    if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE&&model.isDownloadStatus()){
+                        Utils.installAPK(context,model.getAppTitle());
                     }else{
                         context.startActivity(model.getIntent());
                     }
                 }else {
-                    if(model.isDownloaded()){
-                        Utils.installAPK(context,model.getTitle());
+                    if(model.isDownloadStatus()){
+                        Utils.installAPK(context,model.getAppTitle());
                     }else {
                         Utils.showToast(context, context.getResources().getString(R.string.downloading_in_progress));
                     }
@@ -200,11 +209,11 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         public void onDownloadComplete(DownloadRequest request) {
             final int id = request.getDownloadId();
             model = downLoadMap.get(id);
-            LogUtil.createLog("onDownloadComplete ::",model.getTitle());
+            LogUtil.createLog("onDownloadComplete ::",model.getAppTitle());
             position = downLoadMapPosition.get(id);
             if(home!=null){
-                if(home.updateDownloadInfo(model.getId(),true)) {
-                    model.setDownloaded(true);
+                if(home.updateDownloadInfo(model.getAppId(),true)) {
+                    model.setDownloadStatus(true);
                     notifyItemChanged(position);
                 }}
 
@@ -228,12 +237,12 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         public void onDownloadFailed(DownloadRequest request, int errorCode, String errorMessage) {
             final int id = request.getDownloadId();
             model = downLoadMap.get(id);
-            LogUtil.createLog("onDownloadFailed ::",model.getTitle());
+            LogUtil.createLog("onDownloadFailed ::",model.getAppTitle());
             position = downLoadMapPosition.get(id);
             downLoadIdMap.put(model.getAppPckageName(),id);
             if(home!=null){
-                if(home.updateDownloadInfo(model.getId(),false)) {
-                    model.setDownloaded(false);
+                if(home.updateDownloadInfo(model.getAppId(),false)) {
+                    model.setDownloadStatus(false);
                     notifyItemChanged(position);
                     model.setDownloadedFailed(true);
                     Utils.showToast(context,"There is problem for downloading some file.");
@@ -279,6 +288,11 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
 
 
 
+
+    public void receiveNotification(int itemPosition){
+
+        notifyItemChanged(itemPosition);
+    }
 
 
 

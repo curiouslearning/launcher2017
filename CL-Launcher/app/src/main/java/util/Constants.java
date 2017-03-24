@@ -65,4 +65,16 @@ public class Constants {
     public static final String ACTION_IN_APP_RECORD_ONE = "org.curiouslearning.RECORD";
     public static final String ACTION_IN_APP_RECORD_TWO = "edu.mit.media.funf.RECORD";
 
+
+
+
+    public static final int ACTION_NOT_DOWNLOAD_YET = 0;
+    public static final int ACTION_DOWNLOAD_STARTED = 1;
+    public static final int ACTION_DOWNLOAD_FAILED = 2;
+    public static final int ACTION_DOWNLOAD_COMPLETED = 3;
+    public static final int ACTION_DOWNLOAD_RUNNING = 4;
+
+
+    public static final int ACTION_INSTALL_COMPLETED = 4;
+
 }

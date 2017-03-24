@@ -208,11 +208,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private HomeKeyLocker mHomeKeyLocker;
     private Timer timerTask = null;
     public static final String clPckgName = "com.excelsoft.cl-launcher";
-    HashMap<Long,AppInfoModel> downLoadMap = new HashMap<>();
-    HashMap<Long,Integer> downLoadMapPosition = new HashMap<>();
-    HashMap<String,Long> downLoadIdMap = new HashMap<>();
+    // HashMap<Long,AppInfoModel> downLoadMap = new HashMap<>();
+    // HashMap<Long,Integer> downLoadMapPosition = new HashMap<>();
+    // HashMap<String,Long> downLoadIdMap = new HashMap<>();
     private DownloadManager downloadManager;
     private static final long NOTIFY_DELAY_TIME = 1000L;
+    private IntentFilter cleanupFilter;
+
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -244,6 +246,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
         settingManager = SettingManager.getInstance(this);
         apiService = ApiClient.getClient().create(ApiInterface.class);
         downloadManager = (DownloadManager)getSystemService(Context.DOWNLOAD_SERVICE);
+
+        cleanupFilter = new IntentFilter(SettingScreen.CLEAN_UP_ACTION);
 
     }
 
@@ -380,6 +384,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
         unregisterReceiver(mWallpaperReceiver);
         unregisterReceiver(mApplicationsReceiver);
+        unregisterReceiver(cleanUpReciever);
+        unregisterReceiver(downLoadreceiver);
 
         stopLocationService();
 
@@ -453,6 +459,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         filter.addAction(Constants.ACTION_IN_APP_RECORD_ONE);
         filter.addAction(Constants.ACTION_IN_APP_RECORD_TWO);
         registerReceiver(mInAppDataCollectionReceiver,filter);
+        registerReceiver(cleanUpReciever,cleanupFilter);
     }
 
     /**
@@ -763,6 +770,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 appInfoAdapter.setDataList(appInfoList);
                 appInfoAdapter.notifyDataSetChanged();
                 addDataIntoMap(appInfoList);
+                checkDownLoadStatusAndProcess(appInfoList);
             }
         }
     }
@@ -934,15 +942,18 @@ public class Home extends BaseActivity implements View.OnClickListener{
                     LogUtil.createLog("added_package",added_package);
                     LogUtil.createLog("alok","added_package ::"+added_package);
 
-                    if(packageMap.get(added_package)!=null && packageMap.get(added_package).getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE)
-                        mAppInfoTable.updateAppUpdateAvailableInfo(added_package,Constants.UPDATE_NOT_AVAILABLE);
+                    if(packageMap.get(added_package)!=null && packageMap.get(added_package).getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE) {
+                        mAppInfoTable.updateAppUpdateAvailableInfo(added_package, Constants.UPDATE_NOT_AVAILABLE);
+                        mAppInfoTable.updateAppUpdateInfo(packageMap.get(added_package).getAppId(), true);
+                    }
 
-                    if(added_package.equals(clPckgName)){
+                    if(!added_package.equals(clPckgName)){
                         //  stopTimer();
+                        loadApplications();
                     }
                 }
             }
-            loadApplications();
+
             //  bindApplications();
             //  bindRecents();
             //  bindFavorites(false);
@@ -1593,20 +1604,26 @@ public class Home extends BaseActivity implements View.OnClickListener{
             for (int i = 0; i < apps.size(); i++) {
                 JsonObject jsonAppObject = apps.get(i).getAsJsonObject();
                 model = new AppInfoModel();
-                model.setId(jsonAppObject.get(Constants.KEY_ID).getAsInt());
-                model.setApkName(jsonAppObject.get(Constants.KEY_APK_NAME).getAsString());
+                //start data parsing actual data coming from server.
+                model.setAppId(jsonAppObject.get(Constants.KEY_ID).getAsInt());
+                model.setApkDownloadPath(jsonAppObject.get(Constants.KEY_APK_NAME).getAsString());
                 model.setAppPckageName(jsonAppObject.get(Constants.KEY_FILE).getAsString());
-                model.setTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
+                model.setAppTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
                 model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
+                model.setAppVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString());
                 if(jsonAppObject.has(Constants.KEY_TYPE))
                     model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
                 model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
-                model.setDownloaded(false);
-                model.setInstalled(false);
+                //end of parsing
+
+                model.setDownloadStatus(Constants.ACTION_NOT_DOWNLOAD_YET);
+                model.setInstalationStatus(false);
+                model.setUpdateVersion("0");
+                model.setIsUpdateVersionExist(Constants.UPDATE_NOT_AVAILABLE);
                 model.setIcon(getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
-                model.setVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString());
-                if(i==apps.size()-1)
-                    model.setVersion("2.3.3");
+                model.setUpdated(false);
+                model.setInstalationProcessInitiate(false);
+                model.setDownloadId(-1);
                 doInsertUpdateProcess(model);
             }
 
@@ -1628,16 +1645,30 @@ public class Home extends BaseActivity implements View.OnClickListener{
             @Override
             protected Void doInBackground(Void... params) {
 
-                if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getId(),model.getAppPckageName()))){
-                    String oldAppVersion = mAppInfoTable.getVersionNo(model.getId(),model.getAppPckageName());
-                    if(!model.getVersion().equals(oldAppVersion)){
+                if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getAppId(),model.getAppPckageName()))){
+
+                    String oldVersionString = mAppInfoTable.getVersionNo(model.getAppId(),model.getAppPckageName());
+                    String newVersionString = model.getAppVersion();
+                    Double oldVersion = 0.0;
+                    Double newVersion = 0.0;
+                    if(oldVersion!=null&&!oldVersionString.equalsIgnoreCase("")){
+                        oldVersion = Double.parseDouble(oldVersionString);
+                    }
+                    if(newVersionString!=null&&!newVersionString.equalsIgnoreCase("")){
+                        newVersion = Double.parseDouble(newVersionString);
+                    }
+
+
+                    if(newVersion>oldVersion){
                         model.setIsUpdateVersionExist(Constants.UPDATE_AVAILABLE);
-                        model.setDownloaded(false);
+                        model.setDownloadStatus(Constants.ACTION_NOT_DOWNLOAD_YET);
+                        model.setUpdated(false);
+                        model.setInstalationProcessInitiate(false);
+                        model.setDownloadId(-1);
                         mAppInfoTable.updateAppInfo(model);
                     }
 
                 }else{
-                    model.setIsUpdateVersionExist(Constants.UPDATE_NOT_AVAILABLE);
                     mAppInfoTable.insertAppInfo(model);
                 }
 
@@ -1657,9 +1688,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
 
-    public boolean updateDownloadInfo(int id,boolean status){
+    public boolean updateDownloadInfo(int id,int status){
         return  mAppInfoTable.updateAppDownLoadInfo(id,status);
     }
+
+    public boolean updateDownloadId(int id,int downLoadId){
+        return  mAppInfoTable.updateAppDownLoadID(id,downLoadId);
+    }
+
 
 
     //Hiding recent task.
@@ -1703,89 +1739,117 @@ public class Home extends BaseActivity implements View.OnClickListener{
     public BroadcastReceiver downLoadreceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            AppInfoModel model;
             String action = intent.getAction();
+            LogUtil.createLog("Download Complete : ","ACTION_DOWNLOAD_COMPLETE");
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
-                long downloadId = intent.getLongExtra(
-                        DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-                DownloadManager.Query query = new DownloadManager.Query();
-                query.setFilterById(downloadId);
-                Cursor cursor = downloadManager.query(query);
-                int cursorCount = cursor.getCount();
-                if (cursorCount > 0) {
-                    cursor.moveToFirst();
-                    int downloadedStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                    if (downloadedStatus == DownloadManager.STATUS_SUCCESSFUL) {
 
-                        model = downLoadMap.get(downloadId);
-                        if(model!=null) {
-                            LogUtil.createLog("onDownloadComplete ::", model.getTitle());
-                           final int position = downLoadMapPosition.get(downloadId);
-                            if (updateDownloadInfo(model.getId(), true)) {
-                                model.setDownloaded(true);
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        appInfoAdapter.notifyItemChanged(position);
-                                    }
-                                },NOTIFY_DELAY_TIME);
-
-                            }
-
-
-                            if (downLoadMapPosition.size() > 0)
-                                downLoadMapPosition.remove(downloadId);
-                            if (downLoadMap.size() > 0)
-                                downLoadMap.remove(downloadId);
-                        }
-
-                    }else if (downloadedStatus == DownloadManager.STATUS_FAILED) {
-
-                        model = downLoadMap.get(downloadId);
-                        if(model!=null) {
-                            LogUtil.createLog("onDownloadFailed ::", model.getTitle());
-                            final int position = downLoadMapPosition.get(downloadId);
-                            downLoadIdMap.put(model.getAppPckageName(), downloadId);
-                            if (updateDownloadInfo(model.getId(), false)) {
-                                model.setDownloaded(false);
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        appInfoAdapter.notifyItemChanged(position);
-                                    }
-                                },NOTIFY_DELAY_TIME);
-
-                                model.setDownloadedFailed(true);
-                                Utils.showToast(context, "There is problem for downloading some file.");
-                            }
-                        }
-
-                    }
-                }
+                checkDownLoadStatusAndProcess(appInfoList);
             }
         }
     };
 
 
 
+    public BroadcastReceiver cleanUpReciever = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            LogUtil.createLog("CleanUpReciever  : ",action);
+           // Utils.showToast(Home.this,getResources().getString(R.string.cleanup_app_string));
+            cleanUpProcess(appInfoList);
+
+        }
+    };
 
 
+
+
+    public  void cleanUpProcess(ArrayList<AppInfoModel> modelList){
+        for (AppInfoModel model:modelList) {
+            checkDownLoadStatusFromDownloadManager(model);
+            if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED
+                    && model.isInstalationProcessInitiate()
+                    && !model.isInstalationStatus()
+                    && !model.isUpdated()) {
+
+                initDownLoad(model, modelList.indexOf(model));
+
+            }else if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED
+                    &&  model.isInstalationProcessInitiate()
+                    &&  model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE
+                    &&  model.isInstalationStatus()
+                    && !model.isUpdated()){
+
+                initDownLoad(model, modelList.indexOf(model));
+            }else{
+              //  Utils.showToast(this,getResources().getString(R.string.no_files_cleanup_txt));
+            }
+        }
+    }
+
+
+//main
+
+    private void checkDownLoadStatusAndProcess(ArrayList<AppInfoModel> modelList){
+        for (AppInfoModel model:modelList) {
+            if(model.getDownloadStatus()!=Constants.ACTION_DOWNLOAD_COMPLETED) {
+                checkDownLoadStatusFromDownloadManager(model);
+                if (model.getDownloadStatus() == Constants.ACTION_NOT_DOWNLOAD_YET) {
+                    initDownLoad(model, modelList.indexOf(model));
+                }else{
+                    appInfoAdapter.notifyItemChanged(modelList.indexOf(model));
+                }
+            }
+        }
+    }
+
+
+    private void checkDownLoadStatusFromDownloadManager(AppInfoModel model){
+        long downloadId = model.getDownloadId();
+        DownloadManager.Query query = new DownloadManager.Query();
+        query.setFilterById(downloadId);
+        Cursor cursor = downloadManager.query(query);
+        if(cursor!=null&&cursor.getCount()>0) {
+            if (cursor.moveToFirst()) {
+                int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                int status = cursor.getInt(columnIndex);
+
+                // Log.i("Fetched","checkStatusAndProcess status:: "+status);
+
+                if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                    model.setDownloadStatus(Constants.ACTION_DOWNLOAD_COMPLETED);
+
+                } else if (status == DownloadManager.STATUS_FAILED) {
+                    // 1. process for download fail.
+                    model.setDownloadStatus(Constants.ACTION_DOWNLOAD_FAILED);
+
+                } else if ((status == DownloadManager.STATUS_PAUSED) ||
+                        (status == DownloadManager.STATUS_RUNNING)) {
+                    model.setDownloadStatus(Constants.ACTION_DOWNLOAD_RUNNING);
+
+                } else if (status == DownloadManager.STATUS_PENDING) {
+                    //Not handling now
+                }
+
+            }
+        }else{
+            model.setDownloadStatus(Constants.ACTION_NOT_DOWNLOAD_YET);
+        }
+
+        updateDownloadInfo(model.getAppId(),model.getDownloadStatus());
+
+
+    }
 
 
 
     private void initDownLoad(AppInfoModel model,int position){
-        String apkDownloadUrl = ApiConstant.APK_ENDPOINT_URL+settingManager.getCL_SerialNo()+ApiConstant.APK+
-                model.getApkName();
-        //  DownloadAPKFileManger.getDownloadManager(context);
-        //  long downLoadID = DownloadAPKFileManger.startDownloadManager(context, apkDownloadUrl,model.getTitle(), Constants.APK_PATH);
 
-        long id = (downLoadIdMap.get(model.getAppPckageName())==null)?model.getId():downLoadIdMap.get(model.getAppPckageName());
-        long downloadId = startDownloadManager(id,apkDownloadUrl,model.getTitle(),settingManager.getAccessToken());
-        // myDownloadStatusListener.setModel(model,position);
-        LogUtil.createLog("startDownLoad ::",model.getTitle());
-        downLoadMap.put(downloadId,model);
-        downLoadMapPosition.put(downloadId,position);
-        downLoadIdMap.put(model.getAppPckageName(),downloadId);
+        String apkDownloadUrl = ApiConstant.APK_ENDPOINT_URL+settingManager.getCL_SerialNo()+ApiConstant.APK+
+                model.getApkDownloadPath();
+        long downloadId = startDownloadManager(model.getAppId(),apkDownloadUrl,model.getAppTitle(),settingManager.getAccessToken());
+        updateDownloadId(model.getAppId(), (int) downloadId);
+        appInfoAdapter.notifyItemChanged(position);
     }
 
 
@@ -1795,7 +1859,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private long startDownloadManager(long downloadID,String downloadURL, String title, String accessToken) {
 
-
+        LogUtil.createLog("startDownloadManager ::",title);
         File filesDir = new File(Constants.APK_PATH);
         if(!filesDir.exists()){
             filesDir.mkdir();
@@ -1816,11 +1880,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
         request.setTitle(title);
         request.addRequestHeader(ApiConstant.AUTHORIZATION, ApiConstant.BEARER+" "+accessToken);
         request.setDestinationUri(Uri.fromFile(destinationUriFile));
-       // request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+        //request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
 
-        if(!checkDownloadSuceesStatus(downloadID)) {
-            downloadID = downloadManager.enqueue(request);
-        }
+        //   if(!checkDownloadSuceesStatus(downloadID)) {
+        downloadID = downloadManager.enqueue(request);
+        //   }
         return downloadID;
     }
 
@@ -1866,15 +1930,18 @@ public class Home extends BaseActivity implements View.OnClickListener{
         @Override
         public void onClick(int position) {
             AppInfoModel model = appInfoList.get(position);
-            if(model.isInstalled()){
-                if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE&&model.isDownloaded()){
-                    Utils.installAPK(Home.this,model.getTitle());
+            if(model.isInstalationStatus()){
+                if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE
+                        && model.getDownloadStatus()==Constants.ACTION_DOWNLOAD_COMPLETED){
+                    Utils.installAPK(Home.this,model.getAppTitle());
+                    mAppInfoTable.updateAppInstallationProcessInfo(model.getAppId(),true);
                 }else{
                     startActivity(model.getIntent());
                 }
             }else {
-                if(model.isDownloaded()){
-                    Utils.installAPK(Home.this,model.getTitle());
+                if(model.getDownloadStatus()==Constants.ACTION_DOWNLOAD_COMPLETED){
+                    Utils.installAPK(Home.this,model.getAppTitle());
+                    mAppInfoTable.updateAppInstallationProcessInfo(model.getAppId(),true);
                 }else {
                     Utils.showToast(Home.this, getResources().getString(R.string.downloading_in_progress));
                 }
@@ -1888,8 +1955,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
         if(appList!=null&&appList.size()>0){
             for (AppInfoModel model:
                  appList) {
-                if(model.isInstalled()) {
-                    if(model.getIsUpdateVersionExist()==1&&!model.isDownloaded()){
+                if(model.isInstalationStatus()) {
+                    if(model.getIsUpdateVersionExist()==1&&!model.isDownloadStatus()){
                         //if(onItemDownLoadStartListener!=null)
                             onItemDownLoadStartListener.onStartDownLoad(position);
                         initDownLoad(model);
@@ -1897,7 +1964,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                 }else{
 
-                    if(model.isDownloaded()) {
+                    if(model.isDownloadStatus()) {
                         holder.loader.setVisibility(View.GONE);
                         holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_install));
                     }else if(model.isDownloadedFailed()) {

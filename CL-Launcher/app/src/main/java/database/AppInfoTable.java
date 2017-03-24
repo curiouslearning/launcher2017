@@ -75,6 +75,7 @@ public class AppInfoTable {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            LogUtil.createLog("onUpgrade DB AppInfoTable::","old Version : "+oldVersion+" New Version :"+newVersion);
 
         }
     }
@@ -122,22 +123,35 @@ public class AppInfoTable {
 
 
     public long insertAppInfo(AppInfoModel info){
-        LogUtil.createLog(TAG,"inserting data into  data base..."+info.getApkName());
+        LogUtil.createLog(TAG,"inserting data into  data base..."+info.getApkDownloadPath());
         ContentValues initialValues = new ContentValues();
-        initialValues.put(APP_ID, info.getId());
-        initialValues.put(APP_TITLE, info.getTitle());
+        initialValues.put(APP_ID, info.getAppId());
+        initialValues.put(APP_TITLE, info.getAppTitle());
         initialValues.put(APP_PACKAGE_NAME, info.getAppPckageName());
-        initialValues.put(APP_APK_DOWNLOAD_PATH, info.getApkName());
+
+        initialValues.put(APP_APK_DOWNLOAD_PATH, info.getApkDownloadPath());
         initialValues.put(APP_CONTENT_TYPE, info.getContentType());
         initialValues.put(APP_TYPE, info.getType());
+
         initialValues.put(APP_IS_VISIBLE, info.getVisible());
-        initialValues.put(APP_VERSION, info.getVersion());
-        initialValues.put(APP_DOWNLOAD_STATUS, ""+info.isDownloaded());
-        initialValues.put(APP_INSTALATION_STATUS, ""+info.isInstalled());
+        initialValues.put(APP_VERSION, info.getAppVersion());
+
+        initialValues.put(APP_DOWNLOAD_STATUS, ""+info.getDownloadStatus());
+        initialValues.put(APP_INSTALATION_STATUS, ""+info.isInstalationStatus());
+
         initialValues.put(APP_APK_LOCAL_PATH, info.getLocalPath());
+        initialValues.put(APP_UPDATE_VERSION, info.getUpdateVersion());
+
+        initialValues.put(UPDATE_AVAILABLE_STATUS, ""+info.getIsUpdateVersionExist());
+        initialValues.put(IS_UPDATED, ""+info.isUpdated());
+
+        initialValues.put(MISC, "");
         initialValues.put(SYNC_STATUS,"");
         initialValues.put(SYNC_TIME,"");
-        initialValues.put(APP_UPDATE_VERSION,info.getIsUpdateVersionExist());
+
+        initialValues.put(INSTALLATION_PROCESS_INITIATE_STATUS, ""+info.isInstalationProcessInitiate());
+        initialValues.put(DOWNLOAD_ID, ""+info.getDownloadId());
+
         return this.mDb.insert(APP_INFO_TABLE, null, initialValues);
     }
 
@@ -146,21 +160,35 @@ public class AppInfoTable {
 
         System.out.println("updating data into  data base...");
         ContentValues initialValues = new ContentValues();
-        initialValues.put(APP_ID, info.getId());
-        initialValues.put(APP_TITLE, info.getTitle());
+        initialValues.put(APP_ID, info.getAppId());
+        initialValues.put(APP_TITLE, info.getAppTitle());
         initialValues.put(APP_PACKAGE_NAME, info.getAppPckageName());
-        initialValues.put(APP_APK_DOWNLOAD_PATH, info.getApkName());
+
+        initialValues.put(APP_APK_DOWNLOAD_PATH, info.getApkDownloadPath());
         initialValues.put(APP_CONTENT_TYPE, info.getContentType());
         initialValues.put(APP_TYPE, info.getType());
+
         initialValues.put(APP_IS_VISIBLE, info.getVisible());
-        initialValues.put(APP_VERSION, info.getVersion());
-        initialValues.put(APP_DOWNLOAD_STATUS, ""+info.isDownloaded());
-        initialValues.put(APP_INSTALATION_STATUS, ""+info.isInstalled());
+        initialValues.put(APP_VERSION, info.getAppVersion());
+
+        initialValues.put(APP_DOWNLOAD_STATUS, ""+info.getDownloadStatus());
+        initialValues.put(APP_INSTALATION_STATUS, ""+info.isInstalationStatus());
+
         initialValues.put(APP_APK_LOCAL_PATH, info.getLocalPath());
+        initialValues.put(APP_UPDATE_VERSION, info.getUpdateVersion());
+
+        initialValues.put(UPDATE_AVAILABLE_STATUS, ""+info.getIsUpdateVersionExist());
+        initialValues.put(IS_UPDATED, ""+info.isUpdated());
+
+        initialValues.put(MISC, "");
         initialValues.put(SYNC_STATUS,"");
         initialValues.put(SYNC_TIME,"");
-        initialValues.put(APP_UPDATE_VERSION,info.getIsUpdateVersionExist());
-        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + info.getId(), null) >0;
+
+        initialValues.put(INSTALLATION_PROCESS_INITIATE_STATUS, ""+info.isInstalationProcessInitiate());
+        initialValues.put(DOWNLOAD_ID, ""+info.getDownloadId());
+
+
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + info.getAppId(), null) >0;
     }
 
     public boolean updateAppInstallationInfo(int id,boolean installStatus){
@@ -175,7 +203,7 @@ public class AppInfoTable {
 
         System.out.println("updating updateAppUpdateAvailableInfo into  data base..."+status);
         ContentValues initialValues = new ContentValues();
-        initialValues.put(APP_UPDATE_VERSION, status);
+        initialValues.put(UPDATE_AVAILABLE_STATUS, status);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_PACKAGE_NAME + " = " + "?", new String[]{packageId}) >0;
     }
 
@@ -188,12 +216,38 @@ public class AppInfoTable {
     }
 
 
-
-    public boolean updateAppDownLoadInfo(int id,boolean downloadStatus){
+    public boolean updateAppInstallationProcessInfo(int id,boolean installStatusProcess){
 
         System.out.println("updating data into  data base...");
         ContentValues initialValues = new ContentValues();
+        initialValues.put(INSTALLATION_PROCESS_INITIATE_STATUS, ""+installStatusProcess);
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
+    }
+
+
+    public boolean updateAppUpdateInfo(int id,boolean isUpdated){
+
+        System.out.println("updating data into  data base...");
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(IS_UPDATED, ""+isUpdated);
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
+    }
+
+
+    public boolean updateAppDownLoadInfo(int id,int downloadStatus){
+
+        System.out.println("updating downloadStatus data into  data base...");
+        ContentValues initialValues = new ContentValues();
         initialValues.put(APP_DOWNLOAD_STATUS, ""+downloadStatus);
+        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
+    }
+
+
+    public boolean updateAppDownLoadID(int id,int downLoadId){
+
+        System.out.println("updating downLoadId data into  data base...");
+        ContentValues initialValues = new ContentValues();
+        initialValues.put(DOWNLOAD_ID, ""+downLoadId);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
     }
 
@@ -208,18 +262,32 @@ public class AppInfoTable {
         if(cur.moveToFirst()){
             do{
                 info = new AppInfoModel();
-                info.setId(cur.getInt(1));
-                info.setTitle(cur.getString(2));
+                info.setAppId(cur.getInt(1));
+                info.setAppTitle(cur.getString(2));
                 info.setAppPckageName(cur.getString(3));
-                info.setApkName(cur.getString(4));
+                info.setApkDownloadPath(cur.getString(4));
                 info.setContentType(cur.getString(5));
                 info.setType(cur.getString(6));
                 info.setVisible(cur.getInt(7));
-                info.setVersion(cur.getString(8));
-                info.setDownloaded(Boolean.parseBoolean(cur.getString(9)));
-                info.setInstalled(Boolean.parseBoolean(cur.getString(10)));
+                info.setAppVersion(cur.getString(8));
+                int status = 0;
+                if(cur.getString(9).equalsIgnoreCase("true"))
+                    status = Constants.ACTION_DOWNLOAD_COMPLETED;
+                else  if(cur.getString(9).equalsIgnoreCase("false"))
+                    status = Constants.ACTION_NOT_DOWNLOAD_YET;
+                else
+                status = Integer.parseInt(cur.getString(9));
+                info.setDownloadStatus(status);
+                if(cur.getString(10)!=null)
+                info.setInstalationStatus(Boolean.parseBoolean(cur.getString(10)));
                 info.setLocalPath(cur.getString(11));
-                info.setIsUpdateVersionExist(cur.getInt(12));
+                if(cur.getString(13)!=null)
+                info.setIsUpdateVersionExist(Integer.parseInt(cur.getString(13)));
+                if(cur.getString(14)!=null)
+                info.setUpdated(Boolean.parseBoolean(cur.getString(14)));
+                if(cur.getString(18)!=null)
+                info.setInstalationProcessInitiate(Boolean.parseBoolean(cur.getString(18)));
+                info.setDownloadId(cur.getInt(19));
                 filterApps(apps,info,manager);
                 appInfoList.add(info);
             }while(cur.moveToNext());
@@ -239,18 +307,32 @@ public class AppInfoTable {
         if(cur.moveToFirst()){
             do{
                 info = new AppInfoModel();
-                info.setId(cur.getInt(1));
-                info.setTitle(cur.getString(2));
+                info.setAppId(cur.getInt(1));
+                info.setAppTitle(cur.getString(2));
                 info.setAppPckageName(cur.getString(3));
-                info.setApkName(cur.getString(4));
+                info.setApkDownloadPath(cur.getString(4));
                 info.setContentType(cur.getString(5));
                 info.setType(cur.getString(6));
                 info.setVisible(cur.getInt(7));
-                info.setVersion(cur.getString(8));
-                info.setDownloaded(Boolean.parseBoolean(cur.getString(9)));
-                info.setInstalled(Boolean.parseBoolean(cur.getString(10)));
+                info.setAppVersion(cur.getString(8));
+                int status = 0;
+                if(cur.getString(9).equalsIgnoreCase("true"))
+                    status = Constants.ACTION_DOWNLOAD_COMPLETED;
+                else  if(cur.getString(9).equalsIgnoreCase("false"))
+                    status = Constants.ACTION_NOT_DOWNLOAD_YET;
+                else
+                    status = Integer.parseInt(cur.getString(9));
+                info.setDownloadStatus(status);
+                if(cur.getString(10)!=null)
+                    info.setInstalationStatus(Boolean.parseBoolean(cur.getString(10)));
                 info.setLocalPath(cur.getString(11));
-                info.setIsUpdateVersionExist(cur.getInt(12));
+                if(cur.getString(13)!=null)
+                    info.setIsUpdateVersionExist(Integer.parseInt(cur.getString(13)));
+                if(cur.getString(14)!=null)
+                    info.setUpdated(Boolean.parseBoolean(cur.getString(14)));
+                if(cur.getString(18)!=null)
+                    info.setInstalationProcessInitiate(Boolean.parseBoolean(cur.getString(18)));
+                info.setDownloadId(cur.getInt(19));
                 map.put(info.getAppPckageName(),info);
             }while(cur.moveToNext());
         }
@@ -266,18 +348,16 @@ public class AppInfoTable {
             ResolveInfo info = apps.get(i);
             if (model.getAppPckageName().
                     equals(info.activityInfo.applicationInfo.packageName)) {
-                model.setTitle(info.loadLabel(manager).toString());
+                model.setAppTitle(info.loadLabel(manager).toString());
                 model.setIntent(model.setActivity(new ComponentName(
                                 info.activityInfo.applicationInfo.packageName,
                                 info.activityInfo.name),
                         Intent.FLAG_ACTIVITY_NEW_TASK
                                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
                 model.setIcon(info.activityInfo.loadIcon(manager));
-                model.setInstalled(true);
-                updateAppInstallationInfo(model.getId(),true);
-                //need to change later
-                model.setDownloaded(true);
-                updateAppDownLoadInfo(model.getId(),true);
+                model.setInstalationStatus(true);
+                model.setDownloadStatus(Constants.ACTION_DOWNLOAD_COMPLETED);
+                updateAppInstallationInfo(model.getAppId(),true);
                 break;
             }
         }
@@ -337,7 +417,7 @@ public class AppInfoTable {
     // Getting  Count
     public String getVersionNo(int appId,String pckgId) {
         String versionNo = "";
-        String countQuery  = "SELECT appVersion FROM " + APP_INFO_TABLE+" WHERE "+APP_ID+" = '"+appId+"' AND "+APP_PACKAGE_NAME+" = '"+pckgId+"'";
+        String countQuery  = "SELECT "+APP_VERSION+" FROM " + APP_INFO_TABLE+" WHERE "+APP_ID+" = '"+appId+"' AND "+APP_PACKAGE_NAME+" = '"+pckgId+"'";
         System.out.println("countQuery......"+countQuery);
         Cursor cur = this.mDb.rawQuery(countQuery, null);
         if(cur.moveToFirst()){
