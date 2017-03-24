@@ -11,7 +11,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class ApiClient {
 
-    public static final String BASE_URL = "https://tablet-api.globallit.org";
+    //prod
+   //public static final String BASE_URL = "https://tablet-api.globallit.org";
+
+    //qa
+    public static final String BASE_URL = "http://qa.tablet-api.globallit.org";
 
     private static Retrofit retrofit = null;
 

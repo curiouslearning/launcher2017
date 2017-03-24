@@ -1880,7 +1880,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         request.setTitle(title);
         request.addRequestHeader(ApiConstant.AUTHORIZATION, ApiConstant.BEARER+" "+accessToken);
         request.setDestinationUri(Uri.fromFile(destinationUriFile));
-        //request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
 
         //   if(!checkDownloadSuceesStatus(downloadID)) {
         downloadID = downloadManager.enqueue(request);
