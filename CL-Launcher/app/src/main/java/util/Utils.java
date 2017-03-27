@@ -250,7 +250,9 @@ public class Utils {
     }
 
 
-    public static String getVersionName(Context context) throws PackageManager.NameNotFoundException {
+    public static String getCLVersion(Context context) throws PackageManager.NameNotFoundException {
         return  context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
     }
+
+
 }

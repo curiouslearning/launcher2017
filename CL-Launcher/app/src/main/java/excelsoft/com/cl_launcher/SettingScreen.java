@@ -90,7 +90,7 @@ public class SettingScreen extends AppCompatActivity implements
         mSwitch.setChecked(settingManager.getRestrictSettingScreen());
         tabletIdTxt.setText(getResources().getString(R.string.tablet_id)+Utils.getDeviceId(this));
         try {
-            launcherVersionTxt.setText(getResources().getString(R.string.launcher_version)+Utils.getVersionName(this));
+            launcherVersionTxt.setText(getResources().getString(R.string.launcher_version)+Utils.getCLVersion(this));
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }

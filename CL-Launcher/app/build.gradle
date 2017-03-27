@@ -7,8 +7,6 @@ android {
         applicationId "excelsoft.com.cl_launcher"
         minSdkVersion 16
         targetSdkVersion 20
-        versionCode 3
-        versionName "0.1.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
@@ -24,7 +22,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-project.txt'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             //runProguard true
             //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-properties.txt'
             signingConfig signingConfigs.release
@@ -48,6 +46,25 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+
+
+    productFlavors{
+
+        PROD{
+            versionCode 5
+            versionName "0.1.5"
+            buildConfigField "String", "SERVICE_BASE_PATH", "\"https://tablet-api.globallit.org\""
+
+        }
+
+        QA {
+            versionCode 4
+            versionName "0.1.4"
+            buildConfigField "String", "SERVICE_BASE_PATH", "\"http://qa.tablet-api.globallit.org\""
+
+        }
+
     }
 }
 

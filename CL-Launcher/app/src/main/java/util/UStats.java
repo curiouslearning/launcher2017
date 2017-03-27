@@ -2,9 +2,11 @@ package util;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.app.usage.UsageEvents;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
 
@@ -18,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedMap;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 import database.BackgroundDataCollectionDB;
@@ -42,6 +45,9 @@ public class UStats {
     private long TimeInforground = 500 ;
     private int minutes=500,seconds=500,hours=500 ;
     private static UStats _instance;
+    private static int TYPE_USAGE_STAT = 0;
+    private static int TYPE_USAGE_EVENT = 1;
+
 
     public static UStats getInstance(Context _Context){
         if(_instance==null){
@@ -69,12 +75,45 @@ public class UStats {
         //  calendar.add(Calendar.YEAR, -1);
         // long startTime = calendar.getTimeInMillis();
 
-        Log.d(TAG, "Range start:" + mDateFormat.format(new Date(startTime)) );
         Log.d(TAG, "Range end:" + mDateFormat.format(new Date(endTime)));
-
+        getUsageEvent(usm,startTime,endTime);
         List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,startTime,endTime);
         return usageStatsList;
     }
+
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void getUsageEvent(UsageStatsManager usm, long startTime, long endTime){
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            UsageEvents usageEvent = usm.queryEvents(startTime,endTime);
+            UsageEvents.Event event = new UsageEvents.Event();
+            PackageManager pm = _Context.getPackageManager();
+            while (usageEvent.getNextEvent(event)) {
+                try {
+                    String pkgName = event.getPackageName();
+                    int eventType = event.getEventType();
+                    long time = event.getTimeStamp();
+                    String appName = pm.getApplicationInfo(pkgName, 0).loadLabel(pm).toString();
+                    Log.d(TAG, "UsageEvent start:" + pkgName +":: event type "+eventType+" time :: "+mDateFormat.format(new Date(time)) );
+
+                    AppUsageModel appUsageModel = new AppUsageModel();
+                    appUsageModel.setApp_package_name(pkgName);
+                    appUsageModel.setApp_name(appName);
+                    String typeEvent =(eventType==Constants.KEY_FOREGROUND_APP)? Constants.KEY_FOREGROUND:Constants.KEY_BACKGROUND;
+                    appUsageModel.setApp_foreground_background_status(typeEvent);
+                    appUsageModel.setEventTime(time);
+                    _insertToDB(appUsageModel,TYPE_USAGE_EVENT);
+                } catch (PackageManager.NameNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+
+
+            }
+        }
+    }
+
+
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void printUsageStats(Context ctx,List<UsageStats> usageStatsList){
@@ -84,17 +123,17 @@ public class UStats {
 
             mAppUsageModel.setApp_name(Utils.getAppName(ctx,u.getPackageName()));
             mAppUsageModel.setApp_package_name(u.getPackageName());
-            mAppUsageModel.setApp_first_time_stamped(mDateFormat.format(new Date(u.getFirstTimeStamp())));
-            mAppUsageModel.setApp_last_time_stamped(mDateFormat.format(new Date(u.getLastTimeStamp())));
-            mAppUsageModel.setApp_last_time_used(mDateFormat.format(new Date(u.getLastTimeStamp())));
-            mAppUsageModel.setTime_in_foreground(convertTotalTimeInForegroundString(u.getTotalTimeInForeground()));
+            mAppUsageModel.setApp_first_time_stamped(u.getFirstTimeStamp()+"");
+            mAppUsageModel.setApp_last_time_stamped(u.getLastTimeStamp()+"");
+            mAppUsageModel.setApp_last_time_used(u.getLastTimeStamp()+"");
+            mAppUsageModel.setTime_in_foreground(u.getTotalTimeInForeground()+"");
             mAppUsageModel.setLatitude(getLatitude());
             mAppUsageModel.setLongitude(getLongitude());
             mAppUsageModel.setSync_status(Constants.STATUS_NOT_SYNC);
             mAppUsageModel.setSync_time(mDateFormat.format(new Date(Calendar.getInstance().getTimeInMillis())));
             LogUtil.createLog(TAG, "Pkg: " + u.getPackageName() +  "\t" + "ForegroundTime: "
                     + u.getTotalTimeInForeground()+"first time stamp :"+u.getFirstTimeStamp()) ;
-            _insertToDB(mAppUsageModel);
+            _insertToDB(mAppUsageModel,TYPE_USAGE_STAT);
         }
 
     }
@@ -161,7 +200,7 @@ public class UStats {
      *
      * @param appUsageModel
      */
-    private void _insertToDB(AppUsageModel appUsageModel){
+    private void _insertToDB(AppUsageModel appUsageModel,int type){
         try{
             if(appCollectionMap!=null){
                 if(appCollectionMap.get(appUsageModel.getApp_package_name())!=null){
@@ -171,8 +210,13 @@ public class UStats {
                         backgroundDataCollectionDB.open();
                         BackgroundDataModel model = new BackgroundDataModel();
                         model.setName(appUsageModel.getApp_name());
-                        model.setTimeStamp(System.currentTimeMillis()+"");
-                        model.setJsonData(getJsonFromModel(appUsageModel));
+                        model.setTimeStamp(System.currentTimeMillis() + "");
+                        if(type==TYPE_USAGE_STAT) {
+                            model.setJsonData(getJsonFromModel(appUsageModel));
+                        }else if(type == TYPE_USAGE_EVENT){
+                            model.setJsonData(getJsonFromModelForEvent(appUsageModel));
+                        }
+
                         if(backgroundDataCollectionDB!=null){
                             backgroundDataCollectionDB.insertInfo(model);
                         }
@@ -189,12 +233,39 @@ public class UStats {
         String jsonString = "";
         JSONObject jsonObject = new JSONObject();
         try {
+            TimeZone tz = TimeZone.getDefault();
             jsonObject.put("key",Constants.KEY_IN_APP);
             JSONObject valueObject = new JSONObject();
             valueObject.put("tabletID",Utils.getDeviceId(_Context));
             valueObject.put("appID",appUsageModel.getApp_package_name());
-            valueObject.put("time_started",appUsageModel.getApp_first_time_stamped());
+            valueObject.put("begin_time",appUsageModel.getApp_first_time_stamped());
+            valueObject.put("end_time",appUsageModel.getApp_last_time_stamped());
             valueObject.put("time_used_sec",appUsageModel.getTime_in_foreground());
+            valueObject.put("utc_offset", tz.getRawOffset());
+            jsonObject.put("value",valueObject);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        jsonString = jsonObject.toString();
+        LogUtil.createLog(TAG,"JSON INFO ::"+jsonString);
+        return jsonString;
+    }
+
+
+
+    private String getJsonFromModelForEvent(AppUsageModel appUsageModel){
+        String jsonString = "";
+        JSONObject jsonObject = new JSONObject();
+        try {
+            TimeZone tz = TimeZone.getDefault();
+            jsonObject.put("key",appUsageModel.getApp_foreground_background_status());
+            JSONObject valueObject = new JSONObject();
+            valueObject.put("tabletID",Utils.getDeviceId(_Context));
+            valueObject.put("appID",appUsageModel.getApp_package_name());
+            valueObject.put("time_happened",appUsageModel.getEventTime());
+            valueObject.put("utc_offset", tz.getRawOffset());
             jsonObject.put("value",valueObject);
 
         } catch (JSONException e) {

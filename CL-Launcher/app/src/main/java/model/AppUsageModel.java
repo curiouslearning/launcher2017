@@ -6,12 +6,33 @@ package model;
 
 public class AppUsageModel {
 
-   private String  _id;
-   private String  app_name;
-   private String  app_package_name;
-   private String  app_first_time_stamped;
-   private String  app_last_time_stamped;
-   private String  app_last_time_used;
+    private String  _id;
+    private String  app_name;
+    private String  app_package_name;
+    private String  app_first_time_stamped;
+    private String  app_last_time_stamped;
+    private String  app_last_time_used;
+    private String app_foreground_background_status;
+
+    public long getEventTime() {
+        return eventTime;
+    }
+
+    public void setEventTime(long eventTime) {
+        this.eventTime = eventTime;
+    }
+
+    public String getApp_foreground_background_status() {
+        return app_foreground_background_status;
+    }
+
+    public void setApp_foreground_background_status(String app_foreground_background_status) {
+        this.app_foreground_background_status = app_foreground_background_status;
+    }
+
+    private long eventTime;
+
+
 
     public String get_id() {
         return _id;
@@ -102,10 +123,10 @@ public class AppUsageModel {
     }
 
     private String  time_in_foreground;
-   private String  latitude;
-   private String  longitude;
-   private String  sync_status;
-   private String  sync_time;
+    private String  latitude;
+    private String  longitude;
+    private String  sync_status;
+    private String  sync_time;
 
 
 

@@ -73,12 +73,6 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
             holder.loader.setVisibility(View.GONE);
             holder.icon.setImageDrawable(model.getIcon());
 
-            /*if(model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE
-                    && model.getDownloadStatus()==Constants.ACTION_NOT_DOWNLOAD_YET){
-                if(onItemDownLoadStartListener!=null)
-                    onItemDownLoadStartListener.onStartDownLoad(position);
-            }*/
-
         }else{
 
             if(model.getDownloadStatus()== Constants.ACTION_DOWNLOAD_COMPLETED) {

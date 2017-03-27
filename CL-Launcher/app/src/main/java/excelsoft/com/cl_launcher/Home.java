@@ -221,13 +221,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
         super.onCreate(icicle);
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
         allFunctionalInitiationAction();
-        try {
-            Utils.showToast(this, "version : "+Utils.getVersionName(this));
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
 
     }
+
 
 
     private void allWidgetInit(){
@@ -936,6 +932,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private class ApplicationsIntentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            LogUtil.createLog("onReceive  : ","ACTION_USER_PRESENT");
             if(intent!=null){
                 if(intent.getAction().equalsIgnoreCase(Intent.ACTION_PACKAGE_ADDED)){
                     String added_package = intent.getData().toString().split(":")[1];
@@ -1432,6 +1429,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     BroadcastReceiver mScreenStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            LogUtil.createLog("onReceive  : ","ACTION_USER_PRESENT");
             if (intent.getAction().equals(Intent.ACTION_USER_PRESENT)) {
                 // Toast.makeText(context, "ACTION_SCREEN_ON", Toast.LENGTH_SHORT).show();
                 if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_ANDROID)){
@@ -1610,7 +1608,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model.setAppPckageName(jsonAppObject.get(Constants.KEY_FILE).getAsString());
                 model.setAppTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
                 model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
-                model.setAppVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString());
+                model.setAppVersion(getValidVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString()));
                 if(jsonAppObject.has(Constants.KEY_TYPE))
                     model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
                 model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
@@ -1647,8 +1645,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                 if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getAppId(),model.getAppPckageName()))){
 
-                    String oldVersionString = mAppInfoTable.getVersionNo(model.getAppId(),model.getAppPckageName());
-                    String newVersionString = model.getAppVersion();
+                    String oldVersionString = getValidVersion(mAppInfoTable.getVersionNo(model.getAppId(),model.getAppPckageName()));
+                    String newVersionString = getValidVersion(model.getAppVersion());
                     Double oldVersion = 0.0;
                     Double newVersion = 0.0;
                     if(oldVersion!=null&&!oldVersionString.equalsIgnoreCase("")){
@@ -1740,6 +1738,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            LogUtil.createLog("onReceive  : ",action);
             LogUtil.createLog("Download Complete : ","ACTION_DOWNLOAD_COMPLETE");
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
 
@@ -1754,8 +1753,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            LogUtil.createLog("CleanUpReciever  : ",action);
-           // Utils.showToast(Home.this,getResources().getString(R.string.cleanup_app_string));
+            LogUtil.createLog("onReceive  : ",action);
+            Utils.showToast(Home.this,getResources().getString(R.string.cleanup_app_string));
             cleanUpProcess(appInfoList);
 
         }
@@ -1782,7 +1781,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                 initDownLoad(model, modelList.indexOf(model));
             }else{
-              //  Utils.showToast(this,getResources().getString(R.string.no_files_cleanup_txt));
+               //  Utils.showToast(this,getResources().getString(R.string.no_files_cleanup_txt));
             }
         }
     }
@@ -1941,7 +1940,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
             }else {
                 if(model.getDownloadStatus()==Constants.ACTION_DOWNLOAD_COMPLETED){
                     Utils.installAPK(Home.this,model.getAppTitle());
-                    mAppInfoTable.updateAppInstallationProcessInfo(model.getAppId(),true);
+                    boolean status = mAppInfoTable.updateAppInstallationProcessInfo(model.getAppId(),true);
+                    LogUtil.createLog("updateAppInstallationProcessInfo",status+"");
                 }else {
                     Utils.showToast(Home.this, getResources().getString(R.string.downloading_in_progress));
                 }
@@ -1982,5 +1982,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
         }
     }
 */
+
+
+    private String getValidVersion(String version){
+        return  version.contains("-")? version.replace("-","."):version;
+    }
 
 }

@@ -50,24 +50,43 @@ public class MemoryUsage {
             this.manifest_version = manifest_version;
         }
 
+        @SerializedName("‘cl_launcher_version’")
+        @Expose
+        private String cl_launcher_version;
+
+
         @SerializedName("manifest_version")
         @Expose
         private String manifest_version;
 
+        public String getCl_launcher_version() {
+            return cl_launcher_version;
+        }
+
+        public void setCl_launcher_version(String cl_launcher_version) {
+            this.cl_launcher_version = cl_launcher_version;
+        }
+
         @SerializedName("android_version")
+
         @Expose
         private String androidVersion;
-        @SerializedName("space_available")
+
+
+        @SerializedName("spaceAvailable_kb")
         @Expose
         private String spaceAvailable_kb;
 
-        @SerializedName("space_in_use")
+        @SerializedName("spaceInUse_kb")
         @Expose
         private String spaceInUse_kb;
-        @SerializedName("cl_software_space")
+
+        @SerializedName("clSoftwareSpace_kb")
         @Expose
         private String clSoftwareSpace_kb;
-        @SerializedName("cl_data_space")
+
+
+        @SerializedName("clDataSpace_kb")
         @Expose
         private String clDataSpace_kb;
 

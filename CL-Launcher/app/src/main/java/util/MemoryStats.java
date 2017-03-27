@@ -2,6 +2,7 @@ package util;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -50,7 +51,7 @@ public class MemoryStats {
         this._Context=_Context;
     }
 
-    private String getMemoryInfoJson(Context context){
+    private String getMemoryInfoJson(Context context) throws PackageManager.NameNotFoundException {
         String jsonInfo = "";
         MemoryUsage memoryUsage = new MemoryUsage();
         MemoryUsage.Value memValue = new MemoryUsage().new Value();
@@ -72,6 +73,7 @@ public class MemoryStats {
         memoryUsage.setKey(KEY_MEMORY_USAGE);
         memValue.setTabletID(getDeviceId(context));
         memValue.setAndroidVersion(getAndroidVersion());
+        memValue.setCl_launcher_version(Utils.getCLVersion(context));
         memValue.setSpaceAvailable_kb(memoryInfo.availMem+"");
         memValue.setSpaceInUse_kb(memUsed+"");
 
@@ -114,7 +116,7 @@ public class MemoryStats {
 
     }
 
-    public void _doInsertInfo(){
+    public void _doInsertInfo() throws PackageManager.NameNotFoundException {
                 BackgroundDataModel model = new BackgroundDataModel();
                 model.setName(_Context.getPackageName());
                 model.setTimeStamp(System.currentTimeMillis()+"");

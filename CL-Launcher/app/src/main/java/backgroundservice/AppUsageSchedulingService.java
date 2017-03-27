@@ -2,6 +2,7 @@ package backgroundservice;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -95,7 +96,11 @@ public class AppUsageSchedulingService extends IntentService {
         instance.setDBHandler(mDbAdapter,backgroundDataCollectionDB);
         appCollectionMap = appInfoTable.getAppInfoMap();
         instance.getCurrentUsageStatus(this,startTime,appCollectionMap);
-        MemoryStats.getInstance(mDbAdapter,backgroundDataCollectionDB,this)._doInsertInfo();
+        try {
+            MemoryStats.getInstance(mDbAdapter,backgroundDataCollectionDB,this)._doInsertInfo();
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
 }

@@ -193,7 +193,7 @@ public class AppInfoTable {
 
     public boolean updateAppInstallationInfo(int id,boolean installStatus){
 
-        System.out.println("updating data into  data base...");
+        System.out.println("updating updateAppInstallationInfo into  data base...");
         ContentValues initialValues = new ContentValues();
         initialValues.put(APP_INSTALATION_STATUS, ""+installStatus);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
@@ -218,7 +218,7 @@ public class AppInfoTable {
 
     public boolean updateAppInstallationProcessInfo(int id,boolean installStatusProcess){
 
-        System.out.println("updating data into  data base...");
+        System.out.println("updating updateAppInstallationProcessInfo into  data base...");
         ContentValues initialValues = new ContentValues();
         initialValues.put(INSTALLATION_PROCESS_INITIATE_STATUS, ""+installStatusProcess);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
@@ -227,7 +227,7 @@ public class AppInfoTable {
 
     public boolean updateAppUpdateInfo(int id,boolean isUpdated){
 
-        System.out.println("updating data into  data base...");
+        System.out.println("updating updateAppInstallationProcessInfo into  data base...");
         ContentValues initialValues = new ContentValues();
         initialValues.put(IS_UPDATED, ""+isUpdated);
         return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
