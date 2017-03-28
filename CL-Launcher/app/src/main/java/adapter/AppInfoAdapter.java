@@ -35,7 +35,6 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
     private Context context;
     private SettingManager settingManager;
     public static final long appUpdateTime =60000L;
-    OnItemDownLoadStartListener onItemDownLoadStartListener;
     OnItemClickListener onItemClickListener;
 
 
@@ -272,9 +271,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
 
 
 
-    public void setOnItemDownLoadStartListener(OnItemDownLoadStartListener onItemDownLoadStartListener){
-        this.onItemDownLoadStartListener=onItemDownLoadStartListener;
-    }
+
 
     public void setOnItemClickListener(OnItemClickListener onItemClickListener){
         this.onItemClickListener=onItemClickListener;

@@ -108,13 +108,15 @@ public class SettingScreen extends AppCompatActivity implements
 
     private void updateLauncherText(){
         AppInfoModel appInfoModel = packageMap.get(clPckgName);
-        if(appInfoModel.getDownloadStatus()==Constants.ACTION_DOWNLOAD_COMPLETED&&
-                appInfoModel.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE){
-            updateLauncherButton.setTextColor(getResources().getColor(R.color.black));
-            updateLauncherButton.setEnabled(true);
-        }else{
-            updateLauncherButton.setTextColor(getResources().getColor(R.color.devider_color));
-            updateLauncherButton.setEnabled(false);
+        if(appInfoModel!=null) {
+            if (appInfoModel.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED &&
+                    appInfoModel.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE) {
+                updateLauncherButton.setTextColor(getResources().getColor(R.color.black));
+                updateLauncherButton.setEnabled(true);
+            } else {
+                updateLauncherButton.setTextColor(getResources().getColor(R.color.devider_color));
+                updateLauncherButton.setEnabled(false);
+            }
         }
     }
 

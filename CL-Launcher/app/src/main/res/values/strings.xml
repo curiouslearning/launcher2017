@@ -37,9 +37,11 @@
     <string name="tablet_id">Tablet Id : </string>
     <string name="manifest_version">Manifest Version : </string>
     <string name="launcher_version">Launcher Version : </string>
-    <string name="cleanup_app_string">App Cleanup</string>
+    <string name="cleanup_app_start_string">Apps cleanup started.</string>
+    <string name="cleanup_app_stop_string">Apps cleanup finished.</string>
     <string name="no_files_cleanup_txt">No files found for clean up.</string>
     <string name="start_cleanup_txt">Applications are put to download again.</string>
+    <string name="cleanup_app_string">Apps Cleanup</string>
 
 
 </resources>
