@@ -1,5 +1,6 @@
 package excelsoft.com.cl_launcher;
 
+import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -19,11 +20,26 @@ import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.google.gson.JsonObject;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import apihandler.ApiClient;
+import apihandler.ApiInterface;
+import apihandler.NetworkStatus;
 import device_admin_utill.CLDeviceManger;
 import device_admin_utill.DevicePolicyAdmin;
 import model.AppInfoModel;
 import preference_manger.SettingManager;
+import qrcodescanner.QRCodeScanning;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import util.Constants;
+import util.LogUtil;
 import util.Utils;
 
 import static excelsoft.com.cl_launcher.Home.clPckgName;
@@ -38,13 +54,15 @@ public class SettingScreen extends AppCompatActivity implements
     private View llPwdView;
     private RadioButton dfltPwd,clPwd,devicePwd;
     private RadioGroup pwdRadioGrp;
-    private Button savePwdBtn,cancelPwdBtn,updateLauncherButton,cleanUpButton;
+    private Button savePwdBtn,cancelPwdBtn,updateLauncherButton,cleanUpButton,setting_app_qrCodeScanner;
     private EditText edPwd,edCpwd;
     private SettingManager settingManager;
     private TextView txtMsg;
     private Switch mSwitch;
     private TextView tabletIdTxt,manifestVersionTxt,launcherVersionTxt;
     public static final String CLEAN_UP_ACTION = "app_clean_up";
+    private ApiInterface apiInterface;
+    private ProgressDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,9 +84,12 @@ public class SettingScreen extends AppCompatActivity implements
         manifestVersionTxt= (TextView) findViewById(R.id.setting_manifest_version);
         launcherVersionTxt= (TextView) findViewById(R.id.setting_launcher_version);
         cancelPwdBtn = (Button) findViewById(R.id.btn_CancelPwd);
+        setting_app_qrCodeScanner = (Button) findViewById(R.id.setting_app_qrCodeScanner);
         mSwitch = (Switch) findViewById(R.id.setting_restrictHome_screenTxtSwitch);
 
         settingManager = SettingManager.getInstance(this);
+        apiInterface = ApiClient.getClient().create(ApiInterface.class);
+        loadingDialog = new ProgressDialog(this);
 
         compName = new ComponentName(this, DevicePolicyAdmin.class);
         deviceManger = CLDeviceManger.getCLDevicePolicyManager(this);
@@ -102,6 +123,7 @@ public class SettingScreen extends AppCompatActivity implements
         cancelPwdBtn.setOnClickListener(this);
         updateLauncherButton.setOnClickListener(this);
         cleanUpButton.setOnClickListener(this);
+        setting_app_qrCodeScanner.setOnClickListener(this);
     }
 
 
@@ -188,14 +210,21 @@ public class SettingScreen extends AppCompatActivity implements
                 handleVisibilityInSaveMode();
             }
         }else if(v.getId()==R.id.setting_Cl_update){
-                if(packageMap.get(clPckgName).getIsUpdateVersionExist()
-                        ==Constants.UPDATE_AVAILABLE){
-                    Utils.installAPK(SettingScreen.this,"CL-Launcher");
-                }
+            if(packageMap.get(clPckgName).getIsUpdateVersionExist()
+                    ==Constants.UPDATE_AVAILABLE){
+                Utils.installAPK(SettingScreen.this,"CL-Launcher");
+            }
         }else if(v.getId()==R.id.setting_app_clean_up){
 
             sentEventHomeToAppCleanup();
+        }else if(v.getId()==R.id.setting_app_qrCodeScanner){
+
+            openQrcodeScanner();
         }
+    }
+
+    private void openQrcodeScanner() {
+        startActivityForResult(new Intent(this, QRCodeScanning.class),121);
     }
 
     private void sentEventHomeToAppCleanup() {
@@ -284,6 +313,7 @@ public class SettingScreen extends AppCompatActivity implements
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        String dataResult = "";
         if (requestCode == 1 && resultCode == RESULT_OK) {
             boolean active = deviceManger.isAdminActive(compName);
             if (active) {
@@ -292,6 +322,22 @@ public class SettingScreen extends AppCompatActivity implements
                 settingManager.setEnablePasswordFormat(Constants.PWD_ANDROID);
 
             }
+        }
+        if (requestCode == 121 && resultCode == RESULT_OK) {
+            if(data!=null) {
+                dataResult = data.getStringExtra("DATA");
+                startDeploymentRegistration(dataResult);
+            }
+
+        }
+    }
+
+    private void startDeploymentRegistration(String dataResult) {
+        if(!NetworkStatus.getInstance().isConnected(this)){
+            Utils.showToast(this,getResources().getString(R.string.network_error_text));
+            return;
+        }else{
+            doCallForDeploymentReg(dataResult);
         }
     }
 
@@ -312,5 +358,62 @@ public class SettingScreen extends AppCompatActivity implements
 
     public void wifiClick(View view){
         startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+    }
+
+
+
+    private void showDialog(){
+        if(loadingDialog!=null) {
+            loadingDialog.setMessage(getResources().getString(R.string.registeringTxt));
+            loadingDialog.setCancelable(false);
+            loadingDialog.show();
+        }
+    }
+
+
+    private void hideDialog(){
+        if(loadingDialog!=null&&loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+    }
+
+
+    private void doCallForDeploymentReg(String deploymentId){
+        showDialog();
+        String authorizationHeader = "Bearer "+settingManager.getAccessToken();
+        String cl_serial_no = settingManager.getCL_SerialNo();
+
+        Call<JsonObject> call = apiInterface.getDeploymentRegCall(authorizationHeader,deploymentId,cl_serial_no);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if(response.isSuccessful()&&response.code()==200){
+                    JsonObject jsonObject = response.body();
+                    if(jsonObject!=null){
+                       Utils.showToast(SettingScreen.this,"Deployed successfully");
+                        LogUtil.createLog("doCallForDeploymentReg ::",jsonObject.toString());
+                    }
+                }else{
+                    try {
+                        JSONObject jObjError = new JSONObject(response.errorBody().string());
+                        JSONObject jsonObjec = jObjError.optJSONObject("error");
+                        Utils.showToast(SettingScreen.this,response.message()+" : "+jsonObjec.optString("code"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+                hideDialog();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                LogUtil.createLog("doCallForDeploymentReg onFailure ::",t.toString());
+               // Utils.showToast(SettingScreen.this,t.toString());
+                hideDialog();
+            }
+        });
     }
 }

@@ -59,4 +59,20 @@ public interface ApiInterface {
             @Path("tablet-serial-number") String tablet_serial_number,
             @Part MultipartBody.Part file);
 
+
+
+    @POST("/deployment/{deployment_id}/tablet/{cl_serial_number}")
+    Call<JsonObject> getDeploymentRegCall(
+            @Header("Authorization") String authorizationHeader,
+            @Path("deployment_id") String deployment_id,
+            @Path("cl_serial_number") String cl_serial_number);
+
+
+    @POST("/deployment/{deployment_id}/tablet/{cl_serial_number}/group/{group_id}")
+    Call<JsonObject> getGroupDeploymentRegCall(
+            @Header("Authorization") String authorizationHeader,
+            @Path("deployment_id") String deployment_id,
+            @Path("cl_serial_number") String cl_serial_number,
+            @Path("group_id") String group_id);
+
 }

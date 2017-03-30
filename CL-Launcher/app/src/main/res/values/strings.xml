@@ -29,6 +29,7 @@
     <string name="device_lock_string">CL-Launcher need to access followings for device lock.</string>
     <string name="network_error_text">Please check your network connection.</string>
     <string name="initializingTxt">Initializing ...</string>
+    <string name="registeringTxt">Registering tablet...</string>
     <string name="downloading_in_progress">Downloading is in progress.</string>
     <string name="cl_db_name">CL_Launcher</string>
     <string name="cl_db">CL_DB</string>
@@ -42,6 +43,9 @@
     <string name="no_files_cleanup_txt">No files found for clean up.</string>
     <string name="start_cleanup_txt">Applications are put to download again.</string>
     <string name="cleanup_app_string">Apps Cleanup</string>
+    <string name="download_failed">Download failed.</string>
+
+    <string name="qr_code_scan_txt">Deployment</string>
 
 
 </resources>

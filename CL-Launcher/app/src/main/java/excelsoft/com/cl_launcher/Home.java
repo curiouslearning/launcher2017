@@ -349,9 +349,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     }
 
-
     private void openDBandLoadApp(){
         appInfoDB = new APPInfoDB(this);
+
         appInfoDB.open();
         mAppInfoTable = new AppInfoTable(this);
         mAppInfoTable.open();
@@ -1593,48 +1593,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
 
-    private void parseData(JsonObject jsonObject){
-        try {
-            AppInfoModel model = null;
-            String clManifestVersion = jsonObject.get(Constants.KEY_VERSION).getAsString();
-            settingManager.setManifestVersion(clManifestVersion);
-            JsonArray apps = jsonObject.getAsJsonArray(Constants.KEY_APPS);
-            LogUtil.createLog("manifest size :",apps.size()+" :: json"+jsonObject.toString());
+    private void parseData(final JsonObject jsonObject){
 
-            for (int i = 0; i < apps.size(); i++) {
-                JsonObject jsonAppObject = apps.get(i).getAsJsonObject();
-                model = new AppInfoModel();
-                //start data parsing actual data coming from server.
-                model.setAppId(jsonAppObject.get(Constants.KEY_ID).getAsInt());
-                model.setApkDownloadPath(jsonAppObject.get(Constants.KEY_APK_NAME).getAsString());
-                model.setAppPckageName(jsonAppObject.get(Constants.KEY_FILE).getAsString());
-                model.setAppTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
-                model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
-                model.setAppVersion(getValidVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString()));
-                if(jsonAppObject.has(Constants.KEY_TYPE))
-                    model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
-                model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
-                //end of parsing
-
-                model.setDownloadStatus(Constants.ACTION_NOT_DOWNLOAD_YET);
-                model.setInstalationStatus(false);
-                model.setUpdateVersion("0");
-                model.setIsUpdateVersionExist(Constants.UPDATE_NOT_AVAILABLE);
-                model.setIcon(getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
-                model.setUpdated(false);
-                model.setInstalationProcessInitiate(false);
-                model.setDownloadId(-1);
-                doInsertUpdateProcess(model);
-            }
-
-        }catch (Exception e){
-
-            e.printStackTrace();
-        }
-    }
-
-
-    private void doInsertUpdateProcess(final AppInfoModel model){
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected void onPreExecute() {
@@ -1645,33 +1605,43 @@ public class Home extends BaseActivity implements View.OnClickListener{
             @Override
             protected Void doInBackground(Void... params) {
 
-                if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getAppId(),model.getAppPckageName()))){
+                try {
+                    AppInfoModel model = null;
+                    String clManifestVersion = jsonObject.get(Constants.KEY_VERSION).getAsString();
+                    settingManager.setManifestVersion(clManifestVersion);
+                    JsonArray apps = jsonObject.getAsJsonArray(Constants.KEY_APPS);
+                    LogUtil.createLog("manifest size :",apps.size()+" :: json"+jsonObject.toString());
 
-                    String oldVersionString = getValidVersion(mAppInfoTable.getVersionNo(model.getAppId(),model.getAppPckageName()));
-                    String newVersionString = getValidVersion(model.getAppVersion());
-                    Double oldVersion = 0.0;
-                    Double newVersion = 0.0;
-                    if(oldVersion!=null&&!oldVersionString.equalsIgnoreCase("")){
-                        oldVersion = Double.parseDouble(oldVersionString);
-                    }
-                    if(newVersionString!=null&&!newVersionString.equalsIgnoreCase("")){
-                        newVersion = Double.parseDouble(newVersionString);
-                    }
+                    for (int i = 0; i < apps.size(); i++) {
+                        JsonObject jsonAppObject = apps.get(i).getAsJsonObject();
+                        model = new AppInfoModel();
+                        //start data parsing actual data coming from server.
+                        model.setAppId(jsonAppObject.get(Constants.KEY_ID).getAsInt());
+                        model.setApkDownloadPath(jsonAppObject.get(Constants.KEY_APK_NAME).getAsString());
+                        model.setAppPckageName(jsonAppObject.get(Constants.KEY_FILE).getAsString());
+                        model.setAppTitle(jsonAppObject.get(Constants.KEY_TITTLE).getAsString());
+                        model.setContentType(jsonAppObject.get(Constants.KEY_CONTENT_TYPE).getAsString());
+                        model.setAppVersion(getValidVersion(jsonAppObject.get(Constants.KEY_VERSION).getAsString()));
+                        if(jsonAppObject.has(Constants.KEY_TYPE))
+                            model.setType(jsonAppObject.get(Constants.KEY_TYPE).getAsString());
+                        model.setVisible(jsonAppObject.get(Constants.KEY_VISIBLE).getAsInt());
+                        //end of parsing
 
-
-                    if(newVersion>oldVersion){
-                        model.setIsUpdateVersionExist(Constants.UPDATE_AVAILABLE);
                         model.setDownloadStatus(Constants.ACTION_NOT_DOWNLOAD_YET);
+                        model.setInstalationStatus(false);
+                        model.setUpdateVersion("0");
+                        model.setIsUpdateVersionExist(Constants.UPDATE_NOT_AVAILABLE);
+                        model.setIcon(getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
                         model.setUpdated(false);
                         model.setInstalationProcessInitiate(false);
                         model.setDownloadId(-1);
-                        mAppInfoTable.updateAppInfo(model);
+                        doInsertUpdateProcess(model);
                     }
 
-                }else{
-                    mAppInfoTable.insertAppInfo(model);
-                }
+                }catch (Exception e){
 
+                    e.printStackTrace();
+                }
                 return null;
             }
 
@@ -1683,8 +1653,44 @@ public class Home extends BaseActivity implements View.OnClickListener{
             }
         }.execute();
 
+    }
+
+
+    private void doInsertUpdateProcess(AppInfoModel model){
+
+
+        if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getAppId(),model.getAppPckageName()))){
+
+            String oldVersionString = getValidVersion(mAppInfoTable.getVersionNo(model.getAppId(),model.getAppPckageName()));
+            String newVersionString = getValidVersion(model.getAppVersion());
+            Double oldVersion = 0.0;
+            Double newVersion = 0.0;
+            if(oldVersion!=null&&!oldVersionString.equalsIgnoreCase("")){
+                oldVersion = Double.parseDouble(oldVersionString);
+            }
+            if(newVersionString!=null&&!newVersionString.equalsIgnoreCase("")){
+                newVersion = Double.parseDouble(newVersionString);
+            }
+
+
+            if(newVersion>oldVersion){
+                model.setIsUpdateVersionExist(Constants.UPDATE_AVAILABLE);
+                model.setDownloadStatus(Constants.ACTION_NOT_DOWNLOAD_YET);
+                model.setUpdated(false);
+                model.setInstalationProcessInitiate(false);
+                model.setDownloadId(-1);
+                mAppInfoTable.updateAppInfo(model);
+            }
+
+        }else{
+            mAppInfoTable.insertAppInfo(model);
+        }
 
     }
+
+
+
+
 
 
 
@@ -1780,35 +1786,35 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 @Override
                 protected AppInfoModel doInBackground(Void... params) {
                     checkDownLoadStatusFromDownloadManager(model);
-                    if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED
-                            && model.isInstalationProcessInitiate()
-                            && !model.isInstalationStatus()
-                            && !model.isUpdated()) {
-
-                        initDownLoad(model);
-                        cleanupMap.add(model);
-                        return model;
-
-                    }else if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED
-                            &&  model.isInstalationProcessInitiate()
-                            &&  model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE
-                            &&  model.isInstalationStatus()
-                            && !model.isUpdated()){
-
-                        initDownLoad(model);
-                        cleanupMap.add(model);
-                        return model;
-                    }
-                    return null;
+                    return model;
                 }
 
                 @Override
                 protected void onPostExecute(AppInfoModel model) {
                     super.onPostExecute(model);
                     if(model!=null){
+
+                        if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED
+                                && model.isInstalationProcessInitiate()
+                                && !model.isInstalationStatus()
+                                && !model.isUpdated()) {
+
+                            initDownLoad(model);
+                            cleanupMap.add(model);
+
+                        }else if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED
+                                &&  model.isInstalationProcessInitiate()
+                                &&  model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE
+                                &&  model.isInstalationStatus()
+                                && !model.isUpdated()){
+
+                            initDownLoad(model);
+                            cleanupMap.add(model);
+                        }
+
                         appInfoAdapter.notifyItemChanged(modelList.indexOf(model));
                     }
-                    if(cleanupMap.size()==0){
+                    if(cleanupMap.size()==0&&modelList.indexOf(model)==modelList.size()-1){
                         Utils.showToast(Home.this, getResources().getString(R.string.no_files_cleanup_txt));
                     }
                 }
@@ -1829,15 +1835,17 @@ public class Home extends BaseActivity implements View.OnClickListener{
                     @Override
                     protected AppInfoModel doInBackground(Void... params) {
                         checkDownLoadStatusFromDownloadManager(model);
-                        if (model.getDownloadStatus() == Constants.ACTION_NOT_DOWNLOAD_YET) {
-                            initDownLoad(model);
-                        }
+
                         return model;
                     }
 
                     @Override
                     protected void onPostExecute(AppInfoModel model) {
                         if(model!=null){
+                            if (model.getDownloadStatus() == Constants.ACTION_NOT_DOWNLOAD_YET||
+                                    model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_FAILED) {
+                                initDownLoad(model);
+                            }
                             appInfoAdapter.notifyItemChanged(modelList.indexOf(model));
                         }
                     }
@@ -1863,7 +1871,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 if (status == DownloadManager.STATUS_SUCCESSFUL) {
                     model.setDownloadStatus(Constants.ACTION_DOWNLOAD_COMPLETED);
                     if(cleanupMap!=null&&cleanupMap.size()>0){
-                     cleanupMap.remove(model);
+                        cleanupMap.remove(model);
                         if(cleanupMap.size()==0){
                             runOnUiThread(new Runnable() {
                                 @Override
@@ -1920,7 +1928,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private long startDownloadManager(String downloadURL, String title, String accessToken) {
 
-        LogUtil.createLog("startDownloadManager ::",title);
+        LogUtil.createLog("startDownloadManager ::",downloadURL+" access token ::"+accessToken);
         File filesDir = new File(Constants.APK_PATH);
         if(!filesDir.exists()){
             filesDir.mkdir();
@@ -2002,6 +2010,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
                         model.setInstalationProcessInitiate(true);
                     }
                     LogUtil.createLog("updateAppInstallationProcessInfo",status+"");
+                }else if(model.getDownloadStatus()==Constants.ACTION_DOWNLOAD_FAILED){
+                    Utils.showToast(Home.this, getResources().getString(R.string.download_failed));
                 }else {
                     Utils.showToast(Home.this, getResources().getString(R.string.downloading_in_progress));
                 }
