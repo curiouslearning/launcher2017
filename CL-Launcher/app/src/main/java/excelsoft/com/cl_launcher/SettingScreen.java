@@ -411,7 +411,7 @@ public class SettingScreen extends AppCompatActivity implements
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 LogUtil.createLog("doCallForDeploymentReg onFailure ::",t.toString());
-               // Utils.showToast(SettingScreen.this,t.toString());
+                Utils.showToast(SettingScreen.this,"Something went wrong. Please try again.");
                 hideDialog();
             }
         });
