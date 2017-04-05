@@ -99,8 +99,9 @@ public class FileUploadAlarmService extends WakefulBroadcastReceiver {
          *         AlarmManager.INTERVAL_HALF_HOUR, alarmIntent);
          */
 
-        long repeatTime = AlarmManager.INTERVAL_DAY;
-       //long repeatTime = 50000;
+       // long repeatTime = AlarmManager.INTERVAL_HOUR;
+        //repeatTime 4hrs
+        long repeatTime = 14400000;
         // Set the alarm to fire at approximately 8:30 a.m., according to the device's
         // clock, and to repeat once a day.
         alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP,

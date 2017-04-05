@@ -22,7 +22,6 @@ import preference_manger.SettingManager;
 import static android.content.Context.ACTIVITY_SERVICE;
 import static util.Constants.KEY_MEMORY_USAGE;
 import static util.Utils.getAndroidVersion;
-import static util.Utils.getDeviceId;
 
 /**
  * Created by IMFCORP\alok.acharya on 16/2/17.
@@ -71,7 +70,7 @@ public class MemoryStats {
         long availableMegs = mi.availMem / 1048576L;*/
 
         memoryUsage.setKey(KEY_MEMORY_USAGE);
-        memValue.setTabletID(getDeviceId(context));
+        memValue.setTabletID(SettingManager.getInstance(context).getCL_SerialNo());
         memValue.setAndroidVersion(getAndroidVersion());
         memValue.setCl_launcher_version(Utils.getCLVersion(context));
         memValue.setSpaceAvailable_kb(memoryInfo.availMem+"");

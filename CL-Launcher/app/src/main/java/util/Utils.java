@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Created by IMFCORP\alok.acharya on 19/12/16.
@@ -255,4 +256,10 @@ public class Utils {
     }
 
 
+    public static int getUTCOffset(){
+        TimeZone tz = TimeZone.getDefault();
+        Date now = new Date();
+        int offsetFromUtc = tz.getOffset(now.getTime()) / 1000;
+        return offsetFromUtc;
+    }
 }

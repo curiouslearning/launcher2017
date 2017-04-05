@@ -21,10 +21,13 @@ import com.google.android.gms.location.LocationServices;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.Date;
+
 import database.BackgroundDataCollectionDB;
 import database.DBAdapter;
 import model.BackgroundDataModel;
 import model.LocationModel;
+import preference_manger.SettingManager;
 import util.Constants;
 import util.LogUtil;
 import util.Utils;
@@ -93,7 +96,7 @@ public class LocationFetchingService extends Service implements
         mDbAdapter.open();
         backgroundDataCollectionDB = new BackgroundDataCollectionDB(this);
         backgroundDataCollectionDB.open();
-        deviceId = Utils.getDeviceId(this);
+        deviceId = SettingManager.getInstance(this).getCL_SerialNo();
         gson = new GsonBuilder().create();
     }
 
@@ -294,7 +297,10 @@ public class LocationFetchingService extends Service implements
                     LocationModel.Value value = locationModel.new Value();
                     value.setLat(mLocation.getLatitude());
                     value.set_longitude(mLocation.getLongitude());
-                    value.setTimestamp(mLocation.getTime());
+                    long time = mLocation.getTime();
+                    Date date = new Date(time);
+                    LogUtil.createLog("Location Time ::",date.getTime()+"");
+                    value.setTimestamp(date.getTime());
                     value.setTabletID(deviceId);
                     locationModel.setValue(value);
                     String  jsonInfo = gson.toJson(locationModel);

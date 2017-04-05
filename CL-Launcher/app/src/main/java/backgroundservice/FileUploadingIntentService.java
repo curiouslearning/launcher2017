@@ -86,7 +86,7 @@ public class FileUploadingIntentService extends IntentService {
             String accessToken = settingManager.getAccessToken();
             String serialNo = settingManager.getCL_SerialNo();
             Uri fileUri = Uri.parse(file.getAbsolutePath());
-            UploadDBFile.uploadFile(accessToken,serialNo,fileUri);
+          //  UploadDBFile.uploadFile(accessToken,serialNo,fileUri);
         }
 
     }
@@ -96,8 +96,12 @@ public class FileUploadingIntentService extends IntentService {
      */
     private void handleActionCopyFile() {
 
+        UploadDBFile uploadDBFile =  new UploadDBFile(this);
         File destFile = FileUtils.getFile(Constants.COPY_DB_FILE_PATH +File.separator +getResources().getString(R.string.cl_db_name));
-        if(!destFile.exists()){
+
+        //if file not exist and background has content data.
+
+        if(!destFile.exists()&&uploadDBFile.getContentSize()>0){
             File srcFile = FileUtils.getFile(Constants.DATABASE_FILE_PATH+
                     File.separator+getResources().getString(R.string.cl_db)+
                     File.separator+getResources().getString(R.string.cl_db_name));
@@ -109,7 +113,7 @@ public class FileUploadingIntentService extends IntentService {
                 try {
                     if(UploadDBFile.copyFileUsingStream(srcFile,destFile)){
                         handleActionFileUpload(destFile);
-                        new UploadDBFile().doFlushBackgroundData(this);
+                        uploadDBFile.doFlushBackgroundData();
 
                     }
 
@@ -117,7 +121,7 @@ public class FileUploadingIntentService extends IntentService {
                     e.printStackTrace();
                 }
             }
-        }else{
+        }else if(destFile.exists()){
             handleActionFileUpload(destFile);
         }
 

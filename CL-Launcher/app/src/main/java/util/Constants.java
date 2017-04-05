@@ -84,4 +84,16 @@ public class Constants {
     public static final int  KEY_BACKGROUND_APP = 2;
     public static final int  KEY_FOREGROUND_APP = 1;
 
+
+    //QR Code deployments json keys
+
+
+    public static final String  KEY_DEPLOYMENT_ID = "deployentId";
+    public static final String  KEY_TABLET_LEBEl= "tablet_label";
+    public static final String  KEY_GROUP_ID = "groupId";
+
+    //ERROR CONSTANTS
+    public static final String  KEY_INVALID_TOKEN = "Invalid token: access token has expired";
+
+
 }

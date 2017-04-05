@@ -81,6 +81,8 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -100,6 +102,7 @@ import apihandler.ApiConstant;
 import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
 import backgroundservice.AppUsageAlarmReceiver;
+import backgroundservice.AppUsageSchedulingService;
 import backgroundservice.InAppDataCollectionReceiver;
 import backgroundservice.LocationFetchingService;
 import database.APPInfoDB;
@@ -119,6 +122,7 @@ import util.Utils;
 
 import static adapter.AppInfoAdapter.appUpdateTime;
 import static android.content.Intent.ACTION_PACKAGE_ADDED;
+import static android.support.v4.content.WakefulBroadcastReceiver.startWakefulService;
 import static permission_manager.PermissionHandler.checkIfAlreadyhavePermission;
 import static permission_manager.PermissionHandler.requestForSpecificPermission;
 import static util.Utils.showToast;
@@ -860,6 +864,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 }else{
                     Utils.showToast(this,getResources().getString(R.string.network_error_text));
                 }
+                doCallForCollectInAppData();
                 break;
 
             case R.id.menu_setting:
@@ -876,6 +881,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 callHelpScreen();
                 break;
         }
+    }
+
+    private void doCallForCollectInAppData() {
+        Intent service = new Intent(this, AppUsageSchedulingService.class);
+        // Start the service, keeping the device awake while it is launching.
+        startWakefulService(this, service);
     }
 
 
@@ -1565,8 +1576,21 @@ public class Home extends BaseActivity implements View.OnClickListener{
                         parseData(jsonObject);
                     }
 
-                }else{
-                    doCallForAccessToken(settingManager.getCL_Credential());
+                }else {
+                    try {
+                        JSONObject jObjError = new JSONObject(response.errorBody().string());
+                        String errorString = jObjError.optString("error");
+                        if(errorString.equalsIgnoreCase(Constants.KEY_INVALID_TOKEN))
+                            doCallForAccessToken(settingManager.getCL_Credential());
+                        else
+                        Utils.showToast(Home.this,response.message()+" : "+errorString);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+
                 }
 
             }
@@ -1639,8 +1663,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
                     }
 
                 }catch (Exception e){
-
                     e.printStackTrace();
+                    Utils.showToast(Home.this,getResources().getString(R.string.error_with_manifest));
                 }
                 return null;
             }

@@ -20,7 +20,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SortedMap;
-import java.util.TimeZone;
 import java.util.TreeMap;
 
 import database.BackgroundDataCollectionDB;
@@ -28,6 +27,7 @@ import database.DBAdapter;
 import model.AppInfoModel;
 import model.AppUsageModel;
 import model.BackgroundDataModel;
+import preference_manger.SettingManager;
 
 import static android.content.Context.ACTIVITY_SERVICE;
 
@@ -233,15 +233,14 @@ public class UStats {
         String jsonString = "";
         JSONObject jsonObject = new JSONObject();
         try {
-            TimeZone tz = TimeZone.getDefault();
             jsonObject.put("key",Constants.KEY_IN_APP);
             JSONObject valueObject = new JSONObject();
-            valueObject.put("tabletID",Utils.getDeviceId(_Context));
+            valueObject.put("tabletID", SettingManager.getInstance(_Context).getCL_SerialNo());
             valueObject.put("appID",appUsageModel.getApp_package_name());
             valueObject.put("begin_time",appUsageModel.getApp_first_time_stamped());
             valueObject.put("end_time",appUsageModel.getApp_last_time_stamped());
             valueObject.put("time_used_sec",appUsageModel.getTime_in_foreground());
-            valueObject.put("utc_offset", tz.getRawOffset());
+            valueObject.put("utc_offset",Utils.getUTCOffset());
             jsonObject.put("value",valueObject);
 
         } catch (JSONException e) {
@@ -259,13 +258,12 @@ public class UStats {
         String jsonString = "";
         JSONObject jsonObject = new JSONObject();
         try {
-            TimeZone tz = TimeZone.getDefault();
             jsonObject.put("key",appUsageModel.getApp_foreground_background_status());
             JSONObject valueObject = new JSONObject();
-            valueObject.put("tabletID",Utils.getDeviceId(_Context));
+            valueObject.put("tabletID",SettingManager.getInstance(_Context).getCL_SerialNo());
             valueObject.put("appID",appUsageModel.getApp_package_name());
             valueObject.put("time_happened",appUsageModel.getEventTime());
-            valueObject.put("utc_offset", tz.getRawOffset());
+            valueObject.put("utc_offset", Utils.getUTCOffset());
             jsonObject.put("value",valueObject);
 
         } catch (JSONException e) {
@@ -322,7 +320,7 @@ public class UStats {
 
     private void   doInsertPrevVersionUsageDetail(Context context){
         ActivityManager activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
-
+        @SuppressWarnings("deprecation")
         final List<ActivityManager.RunningTaskInfo> recentTasks = activityManager.getRunningTasks(Integer.MAX_VALUE);
 
         for (int i = 0; i < recentTasks.size(); i++)

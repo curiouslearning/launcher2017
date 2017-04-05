@@ -36,7 +36,7 @@ public class LocationModel {
 
     public class Value {
 
-        @SerializedName("double")
+        @SerializedName("long")
         @Expose
         private double _longitude;
         @SerializedName("lat")
@@ -47,7 +47,7 @@ public class LocationModel {
         private String tabletID;
         @SerializedName("timestamp")
         @Expose
-        private double timestamp;
+        private long timestamp;
 
         public double get_longitude() {
             return _longitude;
@@ -73,11 +73,11 @@ public class LocationModel {
             this.tabletID = tabletID;
         }
 
-        public double getTimestamp() {
+        public long getTimestamp() {
             return timestamp;
         }
 
-        public void setTimestamp(double timestamp) {
+        public void setTimestamp(long timestamp) {
             this.timestamp = timestamp;
         }
 

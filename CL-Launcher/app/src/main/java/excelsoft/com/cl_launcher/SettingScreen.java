@@ -59,7 +59,7 @@ public class SettingScreen extends AppCompatActivity implements
     private SettingManager settingManager;
     private TextView txtMsg;
     private Switch mSwitch;
-    private TextView tabletIdTxt,manifestVersionTxt,launcherVersionTxt;
+    private TextView tabletIdTxt,manifestVersionTxt,launcherVersionTxt,setting_launcher_endpointTxt;
     public static final String CLEAN_UP_ACTION = "app_clean_up";
     private ApiInterface apiInterface;
     private ProgressDialog loadingDialog;
@@ -83,6 +83,7 @@ public class SettingScreen extends AppCompatActivity implements
         tabletIdTxt= (TextView) findViewById(R.id.setting_tablet_id);
         manifestVersionTxt= (TextView) findViewById(R.id.setting_manifest_version);
         launcherVersionTxt= (TextView) findViewById(R.id.setting_launcher_version);
+        setting_launcher_endpointTxt= (TextView) findViewById(R.id.setting_launcher_endpoint);
         cancelPwdBtn = (Button) findViewById(R.id.btn_CancelPwd);
         setting_app_qrCodeScanner = (Button) findViewById(R.id.setting_app_qrCodeScanner);
         mSwitch = (Switch) findViewById(R.id.setting_restrictHome_screenTxtSwitch);
@@ -109,7 +110,11 @@ public class SettingScreen extends AppCompatActivity implements
 
         }
         mSwitch.setChecked(settingManager.getRestrictSettingScreen());
-        tabletIdTxt.setText(getResources().getString(R.string.tablet_id)+Utils.getDeviceId(this));
+
+        tabletIdTxt.setText(getResources().getString(R.string.tablet_id)+settingManager.getCL_SerialNo());
+
+        setting_launcher_endpointTxt.setText(getResources().getString(R.string.end_point)+BuildConfig.SERVICE_BASE_PATH);
+
         try {
             launcherVersionTxt.setText(getResources().getString(R.string.launcher_version)+Utils.getCLVersion(this));
         } catch (PackageManager.NameNotFoundException e) {
@@ -337,9 +342,29 @@ public class SettingScreen extends AppCompatActivity implements
             Utils.showToast(this,getResources().getString(R.string.network_error_text));
             return;
         }else{
-            doCallForDeploymentReg(dataResult);
+            try {
+                JSONObject jsonObject = new JSONObject(dataResult);
+                String deploymentId = jsonObject.has(Constants.KEY_DEPLOYMENT_ID)?jsonObject.optString(Constants.KEY_DEPLOYMENT_ID):"";
+                String groupId = jsonObject.has(Constants.KEY_GROUP_ID)?jsonObject.optString(Constants.KEY_GROUP_ID):"";
+                String tabletLebel = jsonObject.has(Constants.KEY_TABLET_LEBEl)?jsonObject.optString(Constants.KEY_TABLET_LEBEl):"";
+
+                if(groupId.equals("")){
+                    doCallForDeploymentReg(deploymentId);
+                }else{
+                    doCallForDeploymentGroupReg(deploymentId,groupId);
+                }
+
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Utils.showToast(SettingScreen.this,getResources().getString(R.string.invalid_json));
+            }
+
+
         }
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
@@ -377,6 +402,56 @@ public class SettingScreen extends AppCompatActivity implements
         }
     }
 
+    /**
+     * Method for group regd.
+     * @param deploymentId
+     * @param groupId
+     */
+    private void doCallForDeploymentGroupReg(String deploymentId, String groupId) {
+        showDialog();
+        String authorizationHeader = "Bearer "+settingManager.getAccessToken();
+        String cl_serial_no = settingManager.getCL_SerialNo();
+
+        Call<JsonObject> call = apiInterface.getGroupDeploymentRegCall(authorizationHeader,deploymentId,cl_serial_no,groupId);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if(response.isSuccessful()&&response.code()==200){
+                    JsonObject jsonObject = response.body();
+                    if(jsonObject!=null){
+                        Utils.showToast(SettingScreen.this,"Deployed successfully");
+                        LogUtil.createLog("doCallForDeploymentReg ::",jsonObject.toString());
+                    }
+                }else{
+                    try {
+                        JSONObject jObjError = new JSONObject(response.errorBody().string());
+                        JSONObject jsonObjec = jObjError.optJSONObject("error");
+                        Utils.showToast(SettingScreen.this,response.message()+" : "+jsonObjec.optString("code"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+                hideDialog();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                LogUtil.createLog("doCallForDeploymentReg onFailure ::",t.toString());
+                Utils.showToast(SettingScreen.this,"Something went wrong. Please try again.");
+                hideDialog();
+            }
+        });
+
+    }
+
+
+    /**
+     * Method for deployment regd.
+     * @param deploymentId
+     */
 
     private void doCallForDeploymentReg(String deploymentId){
         showDialog();

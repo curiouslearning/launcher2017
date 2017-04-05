@@ -221,7 +221,7 @@
             android:layout_gravity="center"
             android:textSize="@dimen/option_item_text_size"
             android:visibility="visible"
-            android:onClick="wifiClick"/>
+           />
         <TextView
             android:id="@+id/setting_manifest_version"
             android:layout_below="@+id/setting_tablet_id"
@@ -234,7 +234,7 @@
             android:layout_gravity="center"
             android:textSize="@dimen/option_item_text_size"
             android:visibility="visible"
-            android:onClick="wifiClick"/>
+           />
         <TextView
             android:id="@+id/setting_launcher_version"
             android:layout_below="@+id/setting_manifest_version"
@@ -247,7 +247,21 @@
             android:layout_gravity="center"
             android:textSize="@dimen/option_item_text_size"
             android:visibility="visible"
-            android:onClick="wifiClick"/>
+            />
+
+        <TextView
+            android:id="@+id/setting_launcher_endpoint"
+            android:layout_below="@+id/setting_launcher_version"
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/end_point"
+            android:textColor="@color/black"
+            android:gravity="left|center_vertical"
+            android:layout_gravity="center"
+            android:textSize="@dimen/option_item_text_size"
+            android:visibility="visible"
+            />
     </RelativeLayout>
 
 </ScrollView>

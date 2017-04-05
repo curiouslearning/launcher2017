@@ -31,6 +31,26 @@ import retrofit2.Response;
 
 public class UploadDBFile {
 
+
+    public UploadDBFile(Context _Context){
+        if(mDbAdapter==null){
+            mDbAdapter = new DBAdapter(_Context);
+            mDbAdapter.open();
+        }
+        if(!mDbAdapter.isOpen()){
+            mDbAdapter.open();
+        }
+
+        if(backgroundDataCollectionDB==null){
+            backgroundDataCollectionDB = new BackgroundDataCollectionDB(_Context);
+            backgroundDataCollectionDB.open();
+
+        }
+        if(!backgroundDataCollectionDB.isOpen()){
+            backgroundDataCollectionDB.open();
+        }
+    }
+
     private DBAdapter mDbAdapter;
     private BackgroundDataCollectionDB backgroundDataCollectionDB;
 
@@ -114,29 +134,13 @@ public class UploadDBFile {
 
 
 
-    public void doFlushBackgroundData(final Context _Context){
+    public void doFlushBackgroundData(){
 
         new AsyncTask<Void, Void, Void>() {
 
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
-                if(mDbAdapter==null){
-                    mDbAdapter = new DBAdapter(_Context);
-                    mDbAdapter.open();
-                }
-                if(!mDbAdapter.isOpen()){
-                    mDbAdapter.open();
-                }
-
-                if(backgroundDataCollectionDB==null){
-                    backgroundDataCollectionDB = new BackgroundDataCollectionDB(_Context);
-                    backgroundDataCollectionDB.open();
-
-                }
-                if(!backgroundDataCollectionDB.isOpen()){
-                    backgroundDataCollectionDB.open();
-                }
             }
 
             @Override
@@ -161,4 +165,7 @@ public class UploadDBFile {
         }.execute();
     }
 
+    public int getContentSize() {
+        return backgroundDataCollectionDB.getCount();
+    }
 }
