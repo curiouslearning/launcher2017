@@ -49,6 +49,10 @@
     <string name="invalid_json">Invalid result from QR code.</string>
     <string name="end_point">End Point :</string>
     <string name="error_with_manifest">Something went wrong in manifest data.</string>
-
+ <string name="explanation_access_to_appusage_is_not_enabled">Failed to retrieve app usage
+        statistics. You may need to enable access
+        for this app through Settings > Security > Apps with usage access
+    </string>
+    <string name="manifest_version_error">Manifest Version Error.</string>
 
 </resources>

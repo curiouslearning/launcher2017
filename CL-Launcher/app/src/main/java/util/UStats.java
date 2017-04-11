@@ -164,12 +164,13 @@ public class UStats {
         Log.d(TAG, "Range end:" + mDateFormat.format(new Date(endTime)));
 
         List<UsageStats> usageStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,startTime,endTime);
+
         return usageStatsList;
     }
 
-    private String getProcessName(Context context,long startTime,long endTime) {
+    public static String getProcessName(Context context) {
         String foregroundProcess = "";
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
+      /*  ActivityManager activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
         // Process running
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             UsageStatsManager mUsageStatsManager = getUsageStatsManager(context);
@@ -191,7 +192,33 @@ public class UStats {
             @SuppressWarnings("deprecation") ActivityManager.RunningTaskInfo foregroundTaskInfo = activityManager.getRunningTasks(1).get(0);
             foregroundProcess = foregroundTaskInfo.topActivity.getPackageName();
 
+        }*/
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            // intentionally using string value as Context.USAGE_STATS_SERVICE was
+            // strangely only added in API 22 (LOLLIPOP_MR1)
+            @SuppressWarnings("WrongConstant")
+            UsageStatsManager usm = (UsageStatsManager)context.getSystemService("usagestats");
+            long time = System.currentTimeMillis();
+            List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,
+                    time - 1000 * 1000, time);
+            if (appList != null && appList.size() > 0) {
+                SortedMap<Long, UsageStats> mySortedMap = new TreeMap<Long, UsageStats>();
+                for (UsageStats usageStats : appList) {
+                    mySortedMap.put(usageStats.getLastTimeUsed(),
+                            usageStats);
+                }
+                if (mySortedMap != null && !mySortedMap.isEmpty()) {
+                    foregroundProcess = mySortedMap.get(
+                            mySortedMap.lastKey()).getPackageName();
+                }
+            }
+        } else {
+            ActivityManager am = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
+            List<ActivityManager.RunningAppProcessInfo> tasks = am
+                    .getRunningAppProcesses();
+            foregroundProcess = tasks.get(0).processName;
         }
+
         return foregroundProcess;
     }
 
@@ -318,19 +345,20 @@ public class UStats {
     }
 
 
-    private void   doInsertPrevVersionUsageDetail(Context context){
+    public static void   doInsertPrevVersionUsageDetail(Context context){
         ActivityManager activityManager = (ActivityManager) context.getSystemService(ACTIVITY_SERVICE);
         @SuppressWarnings("deprecation")
         final List<ActivityManager.RunningTaskInfo> recentTasks = activityManager.getRunningTasks(Integer.MAX_VALUE);
 
         for (int i = 0; i < recentTasks.size(); i++)
         {
-            Log.d("Executed app", "Application executed : " +recentTasks.get(i).baseActivity.toShortString()+ "\t\t ID: "+recentTasks.get(i).id+"");
+            Log.d("Executed app", "Application executed : " +recentTasks.get(i).baseActivity.toShortString()+"::::"+recentTasks.get(i).topActivity.getPackageName()+ "\t\t ID: "+recentTasks.get(i).id+"");
         }
 
         @SuppressWarnings("deprecation")
         ActivityManager.RunningTaskInfo foregroundTaskInfo = activityManager.getRunningTasks(1).get(0);
         String foregroundProcess = foregroundTaskInfo.topActivity.getPackageName();
+        Log.d("Focus foregroundProcess", foregroundProcess);
     }
 
 }

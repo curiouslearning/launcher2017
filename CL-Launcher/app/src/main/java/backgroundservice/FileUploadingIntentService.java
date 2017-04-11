@@ -82,11 +82,10 @@ public class FileUploadingIntentService extends IntentService {
     private void handleActionFileUpload(File file) {
         LogUtil.createLog("Files to upload", "FileName:" + file.getAbsolutePath());
         if(NetworkStatus.getInstance().isConnected(this)){
-
             String accessToken = settingManager.getAccessToken();
             String serialNo = settingManager.getCL_SerialNo();
             Uri fileUri = Uri.parse(file.getAbsolutePath());
-          //  UploadDBFile.uploadFile(accessToken,serialNo,fileUri);
+            UploadDBFile.uploadFile(accessToken,serialNo,fileUri);
         }
 
     }

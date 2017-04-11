@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import model.AppInfoModel;
+
 /**
  * Created by IMFCORP\alok.acharya on 19/12/16.
  */
@@ -261,5 +263,11 @@ public class Utils {
         Date now = new Date();
         int offsetFromUtc = tz.getOffset(now.getTime()) / 1000;
         return offsetFromUtc;
+    }
+
+    public static void checkStatusForRootedDeviceAndPocessUninstall(AppInfoModel model) {
+    }
+
+    public static void checkStatusForRootedDeviceAndPocessInstall(AppInfoModel model) {
     }
 }

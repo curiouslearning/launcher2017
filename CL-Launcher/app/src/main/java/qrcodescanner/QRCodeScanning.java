@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -31,10 +32,25 @@ public class QRCodeScanning extends Activity implements ZXingScannerView.ResultH
     }
 
     public void QrScanner(){
-        ActivityCompat.requestPermissions(QRCodeScanning.this, new
-                String[]{Manifest.permission.CAMERA}, REQUEST_WRITE_PERMISSION);
+
         // Start camera
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ActivityCompat.requestPermissions(QRCodeScanning.this, new
+                    String[]{Manifest.permission.CAMERA}, REQUEST_WRITE_PERMISSION);
+        }else{
+           setCameraView();
+        }
+
+    }
+
+
+    private void setCameraView(){
+        mScannerView = new ZXingScannerView(this);   // Programmatically initialize the scanner view
+        setContentView(mScannerView);
+
+        mScannerView.setResultHandler(this); // Register ourselves as a handler for scan results.
+        mScannerView.startCamera();
     }
 
     @Override
@@ -44,11 +60,7 @@ public class QRCodeScanning extends Activity implements ZXingScannerView.ResultH
             case REQUEST_WRITE_PERMISSION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                    mScannerView = new ZXingScannerView(this);   // Programmatically initialize the scanner view
-                    setContentView(mScannerView);
-
-                    mScannerView.setResultHandler(this); // Register ourselves as a handler for scan results.
-                    mScannerView.startCamera();
+                   setCameraView();
                 } else {
                     Toast.makeText(QRCodeScanning.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
                     finish();

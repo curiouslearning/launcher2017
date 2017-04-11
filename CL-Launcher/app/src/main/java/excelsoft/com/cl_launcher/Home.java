@@ -22,6 +22,7 @@ package excelsoft.com.cl_launcher;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
@@ -74,6 +75,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationSettingsResult;
@@ -211,7 +213,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     public static HashMap<String,AppInfoModel > packageMap = new HashMap<>();
     private HomeKeyLocker mHomeKeyLocker;
     private Timer timerTask = null;
-    public static final String clPckgName = "com.excelsoft.cl-launcher";
+    public static  String clPckgName = "com.excelsoft.cl_launcher";
     // HashMap<Long,AppInfoModel> downLoadMap = new HashMap<>();
     // HashMap<Long,Integer> downLoadMapPosition = new HashMap<>();
     // HashMap<String,Long> downLoadIdMap = new HashMap<>();
@@ -233,6 +235,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private void allWidgetInit(){
         setContentView(R.layout.home);
+        clPckgName = getPackageName();
         isExitClick = false;
         screenStateFilter = new IntentFilter();
         screenStateFilter.addAction(Intent.ACTION_USER_PRESENT);
@@ -580,7 +583,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
             } catch (XmlPullParserException e) {
                 Log.w(LOG_TAG, "Got exception parsing favorites.", e);
             } catch (IOException e) {
-                Log.w(LOG_TAG, "Got exception parsing favorites.", e);
+                Log.w(LOG_TAG, "Got exception parsing favorites.", e)
             }
         }
 
@@ -666,12 +669,36 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        Log.d("Focus debug", "Focus changed !");
+
         if (!hasFocus) {
+            Log.d("Focus debug", "Lost focus !");
             mBackDown = mHomeDown = false;
+            Intent closeDialog = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+            sendBroadcast(closeDialog);
+            ActivityManager activityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+            String foregroundPkg = UStats.getProcessName(this);
+            Log.d("Focus packageName", foregroundPkg );
+            if (foregroundPkg != null && foregroundPkg.equals("com.android.systemui")
+                    ||foregroundPkg.equals("com.google.process.gapps")
+                    ||foregroundPkg.equals(clPckgName)
+                    ||foregroundPkg.equals("com.vlingo.midas")) {
+                activityManager.moveTaskToFront(getTaskId(), 0);
+               // startActivity(new Intent(this,Home.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                Log.d("Focus moveTaskToFront ", getTaskId()+"");
+            }
+
         }
     }
+
+
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
@@ -1266,6 +1293,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
 
+
     /**
      *Calling usage setting class if app is not get permitted.
      */
@@ -1275,6 +1303,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivityForResult(intent,Constants.USAGE_STATE_PERMISSION);
+                Toast.makeText(this,
+                        getString(R.string.explanation_access_to_appusage_is_not_enabled),
+                        Toast.LENGTH_LONG).show();
+
             }else{
                 mAppUsageAlarmReceiver = new AppUsageAlarmReceiver();
                 mAppUsageAlarmReceiver.setAlarm(this);
@@ -1664,7 +1696,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                 }catch (Exception e){
                     e.printStackTrace();
-                    Utils.showToast(Home.this,getResources().getString(R.string.error_with_manifest));
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Utils.showToast(Home.this,getResources().getString(R.string.error_with_manifest));
+                        }
+                    });
+
                 }
                 return null;
             }
@@ -1683,6 +1721,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private void doInsertUpdateProcess(AppInfoModel model){
 
 
+        try {
         if(initialAppInfoCountFromDb > 0 && (mAppInfoTable.isExist(model.getAppId(),model.getAppPckageName()))){
 
             String oldVersionString = getValidVersion(mAppInfoTable.getVersionNo(model.getAppId(),model.getAppPckageName()));
@@ -1704,10 +1743,26 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 model.setInstalationProcessInitiate(false);
                 model.setDownloadId(-1);
                 mAppInfoTable.updateAppInfo(model);
+            }else if(newVersion<oldVersion){
+                model.setVisible(Constants.APP_NOT_VISIBLE);
+                mAppInfoTable.updateAppInfo(model);
+                Utils.checkStatusForRootedDeviceAndPocessUninstall(model);
             }
 
         }else{
             mAppInfoTable.insertAppInfo(model);
+        }
+        }catch (NumberFormatException e){
+            e.printStackTrace();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Utils.showToast(Home.this,getResources().getString(R.string.manifest_version_error));
+                }
+            });
+
+        }catch (Exception e){
+            e.printStackTrace();
         }
 
     }
@@ -1907,6 +1962,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
                         }
                     }
 
+                    Utils.checkStatusForRootedDeviceAndPocessInstall(model);
+
                 } else if (status == DownloadManager.STATUS_FAILED) {
                     // 1. process for download fail.
                     model.setDownloadStatus(Constants.ACTION_DOWNLOAD_FAILED);
@@ -1981,7 +2038,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
         return downloadID;
     }
 
-
+    /**
+     *
+     * @param downloadId
+     * @return
+     */
     private boolean checkDownloadSuceesStatus(long downloadId) {
         Cursor cursor = null;
         try {
@@ -2007,8 +2068,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
 
-
-
+    /**
+     *
+     */
 
 
     AppInfoAdapter.OnItemClickListener onItemClickListener = new AppInfoAdapter.OnItemClickListener() {
@@ -2044,9 +2106,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
     };
 
 
-
-
-
+    /**
+     *
+     * @param version
+     * @return
+     */
     private String getValidVersion(String version){
         return  version.contains("-")? version.replace("-","."):version;
     }
