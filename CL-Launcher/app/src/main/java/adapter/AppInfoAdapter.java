@@ -69,8 +69,13 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         holder.title.setText(model.getAppTitle());
 
         if(model.isInstalationStatus()) {
-            holder.loader.setVisibility(View.GONE);
-            holder.icon.setImageDrawable(model.getIcon());
+            if(model.getVisible()!=Constants.APP_NEED_TO_UNINSTALL) {
+                holder.loader.setVisibility(View.GONE);
+                holder.icon.setImageDrawable(model.getIcon());
+            }else{
+                holder.loader.setVisibility(View.GONE);
+                holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
+            }
 
         }else{
 

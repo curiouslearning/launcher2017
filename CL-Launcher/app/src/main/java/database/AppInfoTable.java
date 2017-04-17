@@ -255,7 +255,7 @@ public class AppInfoTable {
 
     public ArrayList<AppInfoModel> getAppInfo(List<ResolveInfo> apps, PackageManager manager) {
 
-        String selectQuery = "SELECT * FROM " + APP_INFO_TABLE+" WHERE "+APP_IS_VISIBLE+" = '"+Constants.APP_VISIBLE+"'";
+        String selectQuery = "SELECT * FROM " + APP_INFO_TABLE+" WHERE "+APP_IS_VISIBLE+" = '"+Constants.APP_VISIBLE+"' OR "+APP_IS_VISIBLE+" = '"+Constants.APP_NEED_TO_UNINSTALL+"'";
         ArrayList<AppInfoModel> appInfoList = new ArrayList<AppInfoModel>();
         AppInfoModel info ;
         Cursor cur = this.mDb.rawQuery(selectQuery, null);
@@ -356,7 +356,7 @@ public class AppInfoTable {
                                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
                 model.setIcon(info.activityInfo.loadIcon(manager));
                 model.setInstalationStatus(true);
-                model.setDownloadStatus(Constants.ACTION_DOWNLOAD_COMPLETED);
+               // model.setDownloadStatus(Constants.ACTION_DOWNLOAD_COMPLETED);
                 updateAppInstallationInfo(model.getAppId(),true);
                 break;
             }
@@ -381,6 +381,12 @@ public class AppInfoTable {
         this.mDb.execSQL(deletequery);
     }
 
+
+    public void deleteAppDetails(String pckgId){
+
+        String deletequery ="DELETE from "+ APP_INFO_TABLE +" WHERE "+APP_PACKAGE_NAME+" = '"+pckgId+"'";
+        this.mDb.execSQL(deletequery);
+    }
 
 
 

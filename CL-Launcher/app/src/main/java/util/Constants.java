@@ -61,18 +61,19 @@ public class Constants {
 
     public static final int APP_VISIBLE = 1;
     public static final int APP_NOT_VISIBLE = 0;
+    public static final int APP_NEED_TO_UNINSTALL = 2;
 
     public static final String ACTION_IN_APP_RECORD_ONE = "org.curiouslearning.RECORD";
     public static final String ACTION_IN_APP_RECORD_TWO = "edu.mit.media.funf.RECORD";
 
-
-
+    public static final String ACTION_APP_RELOAD = "action_app_reload";
 
     public static final int ACTION_NOT_DOWNLOAD_YET = 0;
     public static final int ACTION_DOWNLOAD_STARTED = 1;
     public static final int ACTION_DOWNLOAD_FAILED = 2;
     public static final int ACTION_DOWNLOAD_COMPLETED = 3;
     public static final int ACTION_DOWNLOAD_RUNNING = 4;
+
 
 
     public static final int ACTION_INSTALL_COMPLETED = 4;
@@ -94,6 +95,8 @@ public class Constants {
 
     //ERROR CONSTANTS
     public static final String  KEY_INVALID_TOKEN = "Invalid token: access token has expired";
+
+
 
 
 }

@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import model.AppInfoModel;
-
 /**
  * Created by IMFCORP\alok.acharya on 19/12/16.
  */
@@ -265,9 +263,67 @@ public class Utils {
         return offsetFromUtc;
     }
 
-    public static void checkStatusForRootedDeviceAndPocessUninstall(AppInfoModel model) {
+    public static boolean isRooted(){
+        return findBinary("su");
     }
 
-    public static void checkStatusForRootedDeviceAndPocessInstall(AppInfoModel model) {
+    public static boolean findBinary(String binaryName) {
+        boolean found = false;
+        if (!found) {
+            String[] places = {"/sbin/", "/system/bin/", "/system/xbin/", "/data/local/xbin/",
+                    "/data/local/bin/", "/system/sd/xbin/", "/system/bin/failsafe/", "/data/local/"};
+            for (String where : places) {
+                if ( new File( where + binaryName ).exists() ) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        return found;
+    }
+
+
+    public static void unInstallApk(Context context, String packageName) {
+        boolean isAppInstalled = appInstalledOrNot(context,packageName);
+        if(isAppInstalled) {
+            Intent intent = new Intent(Intent.ACTION_DELETE);
+            intent.setData(Uri.parse("package:"+packageName));
+            context.startActivity(intent);
+        }else{
+          //  Toast.makeText(context,"App not installed",Toast.LENGTH_LONG).show();
+            LogUtil.createLog("App Uninstal Status ::",packageName+" not yet install");
+        }
+    }
+
+
+    private static boolean appInstalledOrNot(Context ctx,String uri) {
+        PackageManager pm = ctx.getPackageManager();
+        try {
+            pm.getPackageInfo(uri, PackageManager.GET_ACTIVITIES);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+        }
+
+        return false;
+    }
+
+
+
+    public static int versionCompare(String str1, String str2) {
+        String[] vals1 = str1.split("\\.");
+        String[] vals2 = str2.split("\\.");
+        int i = 0;
+        // set index to first non-equal ordinal or length of shortest version string
+        while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
+            i++;
+        }
+        // compare first non-equal ordinal number
+        if (i < vals1.length && i < vals2.length) {
+            int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
+            return Integer.signum(diff);
+        }
+        // the strings are equal or one string is a substring of the other
+        // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+        return Integer.signum(vals1.length - vals2.length);
     }
 }

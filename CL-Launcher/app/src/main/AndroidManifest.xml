@@ -25,9 +25,13 @@
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
     <uses-permission android:name="android.permission.SEND_DOWNLOAD_COMPLETED_INTENTS" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.DELETE_PACKAGES"/>
+
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="true"/>
+        android:required="true" />
+
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -82,13 +86,13 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name="qrcodescanner.QRCodeScanning"
-            android:screenOrientation="portrait"/>
+        <activity
+            android:name="qrcodescanner.QRCodeScanning"
+            android:screenOrientation="portrait" />
 
         <receiver android:name="backgroundservice.PackageRemoveReciever">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
-
                 <data android:scheme="package" />
             </intent-filter>
         </receiver>
@@ -135,6 +139,9 @@
         <service
             android:name="backgroundservice.APKDownloadService"
             android:enabled="true"
+            android:exported="false" />
+        <service
+            android:name="backgroundservice.AppInstalationService"
             android:exported="false"></service>
     </application>
 

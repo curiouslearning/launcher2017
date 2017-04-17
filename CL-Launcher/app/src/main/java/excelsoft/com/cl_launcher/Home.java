@@ -82,7 +82,6 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -171,6 +170,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private final BroadcastReceiver mWallpaperReceiver = new WallpaperIntentReceiver();
     private final BroadcastReceiver mApplicationsReceiver = new ApplicationsIntentReceiver();
     private final BroadcastReceiver mInAppDataCollectionReceiver = new InAppDataCollectionReceiver();
+    private final BroadcastReceiver mAppReloadReceiver = new ApplicationsLoadReceiver();
+
 
 
    /* private GridView mGrid;
@@ -225,38 +226,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private static final long NOTIFY_DELAY_TIME = 1000L;
     private IntentFilter cleanupFilter;
     public static HashMap<String,AppInfoModel > packageFilterMap = new HashMap<>();
-
-
-    String mocJson = " {\n" +
-            " \t\"version\": \"2.2\",\n" +
-            " \t\"apps\": [{\n" +
-            " \t\t\"id\": 18,\n" +
-            " \t\t\"apkName\": \"com.goatella.beginningblends-1.apk\",\n" +
-            " \t\t\"file\": \"com.goatella.beginningblends\",\n" +
-            " \t\t\"title\": \"Beginning Blends\",\n" +
-            " \t\t\"content_type\": \"Educational\",\n" +
-            " \t\t\"type\": \"app\",\n" +
-            " \t\t\"version\": \"1.0\",\n" +
-            " \t\t\"visible\": 1\n" +
-            " \t}, {\n" +
-            " \t\t\"id\": 121,\n" +
-            " \t\t\"apkName\": \"cl_launcher_qa_vc6.apk\",\n" +
-            " \t\t\"file\": \"excelsoft.com.cl_launcher\",\n" +
-            " \t\t\"title\": \"CL-Launcher\",\n" +
-            " \t\t\"content_type\": \"Management\",\n" +
-            " \t\t\"version\": \"0.7\",\n" +
-            " \t\t\"visible\": 1\n" +
-            " \t}, {\n" +
-            " \t\t\"id\": 129,\n" +
-            " \t\t\"apkName\": \"edu.mit.media.prg.tinkerbook_unity-1.apk\",\n" +
-            " \t\t\"file\": \"edu.mit.media.prg.tinkerbook_unity\",\n" +
-            " \t\t\"title\": \"Tinkerbook\",\n" +
-            " \t\t\"content_type\": \"Eduational\",\n" +
-            " \t\t\"version\": \"0.1\",\n" +
-            " \t\t\"visible\": 1,\n" +
-            " \t\t\"type\": \"app\"\n" +
-            " \t}]\n" +
-            " }";
+    public static boolean isAppClick = false;
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -425,6 +395,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         unregisterReceiver(mApplicationsReceiver);
         unregisterReceiver(cleanUpReciever);
         unregisterReceiver(downLoadreceiver);
+        unregisterReceiver(mAppReloadReceiver);
 
         stopLocationService();
 
@@ -459,6 +430,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     protected void onResume() {
         super.onResume();
         //  bindRecents();
+        isAppClick=false;
         registerReceiver(mScreenStateReceiver, screenStateFilter);
         registerReceiver(downLoadreceiver, new IntentFilter(
                 DownloadManager.ACTION_DOWNLOAD_COMPLETE));
@@ -499,6 +471,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
         filter.addAction(Constants.ACTION_IN_APP_RECORD_TWO);
         registerReceiver(mInAppDataCollectionReceiver,filter);
         registerReceiver(cleanUpReciever,cleanupFilter);
+
+        filter = new IntentFilter(Constants.ACTION_APP_RELOAD);
+        registerReceiver(mAppReloadReceiver,filter);
     }
 
     /**
@@ -721,10 +696,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
             ActivityManager activityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
             String foregroundPkg = UStats.getProcessName(this);
             Log.d("Focus packageName", foregroundPkg );
-            if (foregroundPkg != null && foregroundPkg.equals("com.android.systemui")
+            if (foregroundPkg != null && (foregroundPkg.equals("com.android.systemui")
                     ||foregroundPkg.equals("com.google.process.gapps")
                     ||foregroundPkg.equals(clPckgName)
-                    ||foregroundPkg.equals("com.vlingo.midas")) {
+                    ||foregroundPkg.equals("com.vlingo.midas"))
+                    && !isAppClick) {
                 activityManager.moveTaskToFront(getTaskId(), 0);
                 // startActivity(new Intent(this,Home.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
                 Log.d("Focus moveTaskToFront ", getTaskId()+"");
@@ -815,26 +791,49 @@ public class Home extends BaseActivity implements View.OnClickListener{
             return;
         }
 */
-        PackageManager manager = getPackageManager();
 
-        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        new AsyncTask<Void,Void,Void>(){
 
-        final List<ResolveInfo> apps = manager.queryIntentActivities(mainIntent, 0);
-        Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
-
-        if (apps != null) {
-            appInfoList = mAppInfoTable.getAppInfo(apps,manager);
-            if(!(appInfoList.size()>0)) {
-                initDeviceRegistrationProcess();
-            }else{
-                //  appInfoAdapter.notifyDataSetChanged();
-                appInfoAdapter.setDataList(appInfoList);
-                appInfoAdapter.notifyDataSetChanged();
-                addDataIntoMap(appInfoList);
-                checkDownLoadStatusAndProcess(appInfoList);
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+                showDialog();
             }
-        }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                super.onPostExecute(aVoid);
+                hideDialog();
+                if(!(appInfoList.size()>0)) {
+                    initDeviceRegistrationProcess();
+                }else{
+                    //  appInfoAdapter.notifyDataSetChanged();
+                    appInfoAdapter.setDataList(appInfoList);
+                    appInfoAdapter.notifyDataSetChanged();
+                    addDataIntoMap(appInfoList);
+                    checkDownLoadStatusAndProcess(appInfoList);
+                }
+                isAppClick=false;
+            }
+
+            @Override
+            protected Void doInBackground(Void... params) {
+
+                PackageManager manager = getPackageManager();
+
+                Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+                mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+                final List<ResolveInfo> apps = manager.queryIntentActivities(mainIntent, 0);
+                Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
+
+                if (apps != null) {
+                    appInfoList = mAppInfoTable.getAppInfo(apps,manager);
+                }
+                return null;
+            }
+        }.execute();
+
     }
 
     private void addDataIntoMap(ArrayList<AppInfoModel> appInfoList) {
@@ -1006,8 +1005,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private class ApplicationsIntentReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            LogUtil.createLog("onReceive  : ","ACTION_USER_PRESENT");
             if(intent!=null){
+                LogUtil.createLog("onReceive  : ",intent.getAction());
                 if(intent.getAction().equalsIgnoreCase(Intent.ACTION_PACKAGE_ADDED)){
                     String added_package = intent.getData().toString().split(":")[1];
                     LogUtil.createLog("added_package",added_package);
@@ -1030,6 +1029,25 @@ public class Home extends BaseActivity implements View.OnClickListener{
             //  bindFavorites(false);
         }
     }
+
+
+
+    /**
+     * Receives notifications when applications are added/removed.
+     */
+    private class ApplicationsLoadReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent!=null){
+                LogUtil.createLog("onReceive  : ",intent.getAction());
+                if(intent.getAction().equalsIgnoreCase(Constants.ACTION_APP_RELOAD)){
+                    loadApplications();
+                }
+            }
+        }
+    }
+
+
 
     /**
      * GridView adapter to show the list of all installed applications.
@@ -1640,10 +1658,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 if(response.isSuccessful()&& response.code()==200){
                     JsonObject jsonObject = response.body();
                     if(jsonObject!=null){
-                        // parseData(jsonObject);
-                        JsonObject obj = new JsonParser().parse(mocJson).getAsJsonObject();
-                        if(obj!=null)
-                            parseData(obj);
+                        parseData(jsonObject);
                     }
 
                 }else {
@@ -1789,7 +1804,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 while (it.hasNext()) {
                     Map.Entry pair = (Map.Entry)it.next();
                     System.out.println(pair.getKey().toString() + " = " + pair.getValue());
-                    mAppInfoTable.updateAppVisibilityInfo(pair.getKey().toString(),Constants.APP_NEED_TO_UNINSTALL);
+                    AppInfoModel model = (AppInfoModel) pair.getValue();
+                    if(model!=null) {
+                        if(model.isInstalationStatus()) {
+                            mAppInfoTable.updateAppVisibilityInfo(pair.getKey().toString(), Constants.APP_NEED_TO_UNINSTALL);
+                        }else{
+                            mAppInfoTable.deleteAppDetails(pair.getKey().toString());
+                        }
+                    }
                     it.remove(); // avoids a ConcurrentModificationException
                 }
                 return null;
@@ -1806,25 +1828,26 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
                 String oldVersionString = getValidVersion(mAppInfoTable.getVersionNo(model.getAppId(),model.getAppPckageName()));
                 String newVersionString = getValidVersion(model.getAppVersion());
-                Double oldVersion = 0.0;
-                Double newVersion = 0.0;
-                if(oldVersion!=null&&!oldVersionString.equalsIgnoreCase("")){
-                    oldVersion = Double.parseDouble(oldVersionString);
-                }
-                if(newVersionString!=null&&!newVersionString.equalsIgnoreCase("")){
-                    newVersion = Double.parseDouble(newVersionString);
+
+                int compareResult = 0;
+
+                if(oldVersionString!=null&&!oldVersionString.equalsIgnoreCase("")
+                        && newVersionString!=null&&!newVersionString.equalsIgnoreCase("")){
+                    compareResult = Utils.versionCompare(newVersionString,oldVersionString);
+                    LogUtil.createLog("Version compareResult :: oldVersionString ",oldVersionString+" newVersionString "+newVersionString+" ::"+compareResult+"");
                 }
 
 
-                if(newVersion>oldVersion){
+
+                if(compareResult>0){
                     model.setIsUpdateVersionExist(Constants.UPDATE_AVAILABLE);
                     model.setDownloadStatus(Constants.ACTION_NOT_DOWNLOAD_YET);
                     model.setUpdated(false);
                     model.setInstalationProcessInitiate(false);
                     model.setDownloadId(-1);
 
-                }else if(newVersion<oldVersion){
-                    model.setVisible(Constants.APP_NOT_VISIBLE);
+                }else if(compareResult<0){
+                    model.setVisible(Constants.APP_NEED_TO_UNINSTALL);
                 }
 
                 mAppInfoTable.updateAppInfo(model);
@@ -1832,7 +1855,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
             }else{
                 mAppInfoTable.insertAppInfo(model);
             }
-        }catch (NumberFormatException e){
+        }catch (Exception e){
             e.printStackTrace();
             runOnUiThread(new Runnable() {
                 @Override
@@ -1842,9 +1865,6 @@ public class Home extends BaseActivity implements View.OnClickListener{
             });
             clearFilterMap();
 
-        }catch (Exception e){
-            e.printStackTrace();
-            clearFilterMap();
         }
 
     }
@@ -2166,34 +2186,37 @@ public class Home extends BaseActivity implements View.OnClickListener{
         @Override
         public void onClick(int position) {
             AppInfoModel model = appInfoList.get(position);
-            if(model.isInstalationStatus()){
-                if(model.getVisible()==Constants.APP_NEED_TO_UNINSTALL){
-                    Utils.unInstallApk(Home.this,model.getAppPckageName());
+            if (model != null) {
+                isAppClick = true;
+                if (model.isInstalationStatus()) {
+                    if (model.getVisible() == Constants.APP_NEED_TO_UNINSTALL) {
+                        Utils.unInstallApk(Home.this, model.getAppPckageName());
 
-                }else {
-                    if (model.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE
-                            && model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED) {
+                    } else {
+                        if (model.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE
+                                && model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED) {
+                            Utils.installAPK(Home.this, model.getAppPckageName());
+                            boolean status = updateInstallationProcessInitiate(model.getAppId(), true);
+                            if (status) {
+                                model.setInstalationProcessInitiate(true);
+                            }
+                        } else {
+                            startActivity(model.getIntent());
+                        }
+                    }
+                } else {
+                    if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED) {
                         Utils.installAPK(Home.this, model.getAppPckageName());
                         boolean status = updateInstallationProcessInitiate(model.getAppId(), true);
                         if (status) {
                             model.setInstalationProcessInitiate(true);
                         }
+                        LogUtil.createLog("updateAppInstallationProcessInfo", status + "");
+                    } else if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_FAILED) {
+                        Utils.showToast(Home.this, getResources().getString(R.string.download_failed));
                     } else {
-                        startActivity(model.getIntent());
+                        Utils.showToast(Home.this, getResources().getString(R.string.downloading_in_progress));
                     }
-                }
-            }else {
-                if(model.getDownloadStatus()==Constants.ACTION_DOWNLOAD_COMPLETED){
-                    Utils.installAPK(Home.this,model.getAppPckageName());
-                    boolean status =  updateInstallationProcessInitiate(model.getAppId(),true);
-                    if(status){
-                        model.setInstalationProcessInitiate(true);
-                    }
-                    LogUtil.createLog("updateAppInstallationProcessInfo",status+"");
-                }else if(model.getDownloadStatus()==Constants.ACTION_DOWNLOAD_FAILED){
-                    Utils.showToast(Home.this, getResources().getString(R.string.download_failed));
-                }else {
-                    Utils.showToast(Home.this, getResources().getString(R.string.downloading_in_progress));
                 }
             }
         }

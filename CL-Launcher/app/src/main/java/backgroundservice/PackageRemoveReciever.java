@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import java.io.File;
+
 import database.APPInfoDB;
 import database.AppInfoTable;
 import util.Constants;
@@ -20,10 +22,10 @@ public class PackageRemoveReciever extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if(intent!=null) {
             if (intent.getAction().equalsIgnoreCase(Intent.ACTION_PACKAGE_FULLY_REMOVED)) {
-                String added_package = intent.getData().toString().split(":")[1];
-              // Utils.showToast(context,"alok PackageRemoveReciever::"+added_package);
-                LogUtil.createLog("alok","PackageRemoveReciever ::"+added_package);
-                doUpdateAppInfo(context,added_package);
+                String remove_package = intent.getData().toString().split(":")[1];
+                // Utils.showToast(context,"alok PackageRemoveReciever::"+added_package);
+                LogUtil.createLog("alok","PackageRemoveReciever ::"+remove_package);
+                doUpdateAppInfo(context,remove_package);
             }
         }
     }
@@ -31,16 +33,22 @@ public class PackageRemoveReciever extends BroadcastReceiver {
 
     private void doUpdateAppInfo(Context context,String pckgId){
         try {
-        maDbAdapter = new APPInfoDB(context);
-        maDbAdapter.open();
-        mAppInfoTable = new AppInfoTable(context);
-        mAppInfoTable.open();
-        mAppInfoTable.updateAppVisibilityInfo(pckgId.trim(), Constants.APP_NOT_VISIBLE);
+            maDbAdapter = new APPInfoDB(context);
+            maDbAdapter.open();
+            mAppInfoTable = new AppInfoTable(context);
+            mAppInfoTable.open();
+          //  mAppInfoTable.updateAppVisibilityInfo(pckgId.trim(), Constants.APP_NOT_VISIBLE);
+            mAppInfoTable.deleteAppDetails(pckgId);
+            File deleteFile = new File(Constants.APK_PATH+"/"+pckgId+".apk");
+            if(deleteFile.exists()){
+                deleteFile.delete();
+            }
         }catch (Exception e){
             e.printStackTrace();
         }finally {
             mAppInfoTable.close();
             maDbAdapter.close();
+            context.sendBroadcast(new Intent(Constants.ACTION_APP_RELOAD));
         }
     }
 }

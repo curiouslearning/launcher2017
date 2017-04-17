@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
@@ -115,11 +114,6 @@ public class SettingScreen extends AppCompatActivity implements
 
         setting_launcher_endpointTxt.setText(getResources().getString(R.string.end_point)+BuildConfig.SERVICE_BASE_PATH);
 
-        try {
-            launcherVersionTxt.setText(getResources().getString(R.string.launcher_version)+Utils.getCLVersion(this));
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
         manifestVersionTxt.setText(getResources().getString(R.string.manifest_version)+settingManager.getManifestVersion());
 
         pwdRadioGrp.setOnCheckedChangeListener(this);
@@ -136,6 +130,7 @@ public class SettingScreen extends AppCompatActivity implements
     private void updateLauncherText(){
         AppInfoModel appInfoModel = packageMap.get(clPckgName);
         if(appInfoModel!=null) {
+            launcherVersionTxt.setText(getResources().getString(R.string.launcher_version)+appInfoModel.getAppVersion());
             if (appInfoModel.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED &&
                     appInfoModel.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE) {
                 updateLauncherButton.setTextColor(getResources().getColor(R.color.black));
@@ -217,7 +212,7 @@ public class SettingScreen extends AppCompatActivity implements
         }else if(v.getId()==R.id.setting_Cl_update){
             if(packageMap.get(clPckgName).getIsUpdateVersionExist()
                     ==Constants.UPDATE_AVAILABLE){
-                Utils.installAPK(SettingScreen.this,"CL-Launcher");
+                Utils.installAPK(SettingScreen.this,clPckgName);
             }
         }else if(v.getId()==R.id.setting_app_clean_up){
 
