@@ -73,9 +73,7 @@ public class Constants {
     public static final int ACTION_DOWNLOAD_FAILED = 2;
     public static final int ACTION_DOWNLOAD_COMPLETED = 3;
     public static final int ACTION_DOWNLOAD_RUNNING = 4;
-
-
-
+    public static final int ACTION_ACTION_DOWNLOAD_COMPLETED_INSTALLING_FOR_ROOTED = 5;
     public static final int ACTION_INSTALL_COMPLETED = 4;
 
 

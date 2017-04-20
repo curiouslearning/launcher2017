@@ -3,6 +3,8 @@ package backgroundservice;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
 import java.io.File;
@@ -26,6 +28,9 @@ public class AppInstalationService extends IntentService {
     // TODO: Rename parameters
     private static final String EXTRA_PARAM_APP_INSTALL = "backgroundservice.extra.PARAM_APP_INSTALL";
     private static final String EXTRA_PARAM_APP_UNINSTALL = "backgroundservice.extra.PARAM_APP_UNINSTALL";
+
+    private static final String INSTALL_CMD = "pm install -r";
+    private static final String UNINSTALL_CMD = "pm uninstall";
 
     private Process proc = null;
 
@@ -80,42 +85,14 @@ public class AppInstalationService extends IntentService {
      * parameters.
      */
     private void handleActionAppInstallation(String path) {
-        try {
-            if (proc != null) {
-                proc.getOutputStream().close();
-                proc.getInputStream().close();
-                proc.getErrorStream().close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         path = Constants.APK_PATH+"/"+path.replaceAll("\\s+","") +".apk";
         File file = new File(path);
         if (file.exists()) {
-            try {
-                Log.i("APP", "App installation is started");
-                final String command = "pm install -r " + file.getAbsolutePath();
-                proc = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
-                proc.waitFor();
-                // Runtime.getRuntime().exec("pm install "+ file.getAbsolutePath()).waitFor();
-
-
-                        /*String command = "adb install " + file.getAbsolutePath();;A
-                        Process proc = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
-                        proc.waitFor();*/
-                ;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-
-            }
+            Log.i("APP", "App installation is started");
+            runCommand(INSTALL_CMD,file.getAbsolutePath());
         }else
-           // Toast.makeText(AppInstalationService.this, "No file exist", Toast.LENGTH_SHORT).show();
-        Log.i("APP", "No file exis for App installation");
+            // Toast.makeText(AppInstalationService.this, "No file exist", Toast.LENGTH_SHORT).show();
+            Log.i("APP", "No file exis for App installation");
     }
 
     /**
@@ -123,7 +100,46 @@ public class AppInstalationService extends IntentService {
      * parameters.
      */
     private void handleActionAppUnInstall(String path) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
+       // path = path.replaceAll("\\s+","") +".apk";
+
+        PackageManager m = getPackageManager();
+        String s = path;
+        try {
+            PackageInfo p = m.getPackageInfo(s, 0);
+            s = p.applicationInfo.dataDir;
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.w("yourtag", "Error Package name not found ", e);
+        }
+
+
+     //   File file = new File(s);
+      //  if (file.exists()) {
+            Log.i("APP", "App Uninstallation is started");
+            runCommand(UNINSTALL_CMD,path);
+        //}else
+            // Toast.makeText(AppInstalationService.this, "No file exist", Toast.LENGTH_SHORT).show();
+         //   Log.i("APP", "No file exis for App installation");
+    }
+
+
+    public  void runCommand(String command,String path){
+        try {
+            if (proc != null) {
+                proc.getOutputStream().close();
+                proc.getInputStream().close();
+                proc.getErrorStream().close();
+            }
+
+            command = command +" "+ path;
+            proc = Runtime.getRuntime().exec(new String[]{"su", "-c", command});
+            proc.waitFor();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

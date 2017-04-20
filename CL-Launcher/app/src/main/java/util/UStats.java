@@ -84,7 +84,7 @@ public class UStats {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void getUsageEvent(UsageStatsManager usm, long startTime, long endTime){
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             UsageEvents usageEvent = usm.queryEvents(startTime,endTime);
             UsageEvents.Event event = new UsageEvents.Event();
             PackageManager pm = _Context.getPackageManager();
@@ -193,7 +193,7 @@ public class UStats {
             foregroundProcess = foregroundTaskInfo.topActivity.getPackageName();
 
         }*/
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             // intentionally using string value as Context.USAGE_STATS_SERVICE was
             // strangely only added in API 22 (LOLLIPOP_MR1)
             @SuppressWarnings("WrongConstant")

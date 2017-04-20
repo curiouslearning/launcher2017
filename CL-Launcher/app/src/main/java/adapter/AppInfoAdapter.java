@@ -19,6 +19,8 @@ import preference_manger.SettingManager;
 import util.Constants;
 import util.LogUtil;
 
+import static util.Utils.isRooted;
+
 /**
  * Created by IMFCORP\alok.acharya on 24/2/17.
  */
@@ -69,19 +71,29 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         holder.title.setText(model.getAppTitle());
 
         if(model.isInstalationStatus()) {
-            if(model.getVisible()!=Constants.APP_NEED_TO_UNINSTALL) {
+            if(model.getVisible()==Constants.APP_NEED_TO_UNINSTALL) {
+                if(!isRooted()) {
+                    holder.loader.setVisibility(View.GONE);
+                    holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
+                }else{
+                    removeItemAndUninstallSilently(position);
+                }
+            }else {
                 holder.loader.setVisibility(View.GONE);
                 holder.icon.setImageDrawable(model.getIcon());
-            }else{
-                holder.loader.setVisibility(View.GONE);
-                holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
+
             }
 
         }else{
 
             if(model.getDownloadStatus()== Constants.ACTION_DOWNLOAD_COMPLETED) {
-                holder.loader.setVisibility(View.GONE);
-                holder.icon.setImageDrawable( context.getResources().getDrawable(R.drawable.ic_launcher_app_install));
+                if(!isRooted()) {
+                    holder.loader.setVisibility(View.GONE);
+                    holder.icon.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_launcher_app_install));
+                }else{
+                    holder.loader.setVisibility(View.VISIBLE);
+                    holder.icon.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_launcher_app_not_install));
+                }
             }else if(model.getDownloadStatus()== Constants.ACTION_DOWNLOAD_FAILED
                     || model.getDownloadStatus()==Constants.ACTION_NOT_DOWNLOAD_YET) {
                 holder.loader.setVisibility(View.GONE);
@@ -102,6 +114,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
         }else{
             holder.frame.setVisibility(View.GONE);
         }
+
 
 
        /* holder.icon.setOnClickListener(new View.OnClickListener() {
@@ -125,6 +138,13 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.CustomVi
 */
 
 
+    }
+
+    private void removeItemAndUninstallSilently(int position) {
+        Home home = (Home) context;
+        if(home!=null){
+            home.removeItemAndUninstallSilently(position);
+        }
     }
 
     @Override

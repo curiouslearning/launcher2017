@@ -54,5 +54,6 @@
         for this app through Settings > Security > Apps with usage access
     </string>
     <string name="manifest_version_error">Manifest Version Error.</string>
+    <string name="instaling">Installing... Please wait.</string>
 
 </resources>

@@ -82,6 +82,7 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -105,6 +106,7 @@ import apihandler.ApiClient;
 import apihandler.ApiConstant;
 import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
+import backgroundservice.AppInstalationService;
 import backgroundservice.AppUsageAlarmReceiver;
 import backgroundservice.AppUsageSchedulingService;
 import backgroundservice.InAppDataCollectionReceiver;
@@ -129,6 +131,7 @@ import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.support.v4.content.WakefulBroadcastReceiver.startWakefulService;
 import static permission_manager.PermissionHandler.checkIfAlreadyhavePermission;
 import static permission_manager.PermissionHandler.requestForSpecificPermission;
+import static util.Utils.isRooted;
 import static util.Utils.showToast;
 
 @SuppressLint("NewApi") // To remove error about pressing home and back
@@ -227,6 +230,38 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private IntentFilter cleanupFilter;
     public static HashMap<String,AppInfoModel > packageFilterMap = new HashMap<>();
     public static boolean isAppClick = false;
+
+
+    String mock = "{\n" +
+            "\t\"version\": \"2.9\",\n" +
+            "\t\"apps\": [{\n" +
+            "\t\t\"id\": 19,\n" +
+            "\t\t\"apkName\": \"com.vanluyen.KidColoringNoAds-1.apk\",\n" +
+            "\t\t\"file\": \"com.vanluyen.KidColoringNoAds\",\n" +
+            "\t\t\"title\": \"Kid Coloring\",\n" +
+            "\t\t\"content_type\": \"Educational\",\n" +
+            "\t\t\"type\": \"app\",\n" +
+            "\t\t\"version\": \"9.0.0\",\n" +
+            "\t\t\"visible\": 1\n" +
+            "\t}, {\n" +
+            "\t\t\"id\": 121,\n" +
+            "\t\t\"apkName\": \"cl_launcher_qa_vc8.apk\",\n" +
+            "\t\t\"file\": \"excelsoft.com.cl_launcher\",\n" +
+            "\t\t\"title\": \"CL-Launcher\",\n" +
+            "\t\t\"content_type\": \"Management\",\n" +
+            "\t\t\"version\": \"0.8\",\n" +
+            "\t\t\"visible\": 1\n" +
+            "\t}, {\n" +
+            "\t\t\"id\": 129,\n" +
+            "\t\t\"apkName\": \"edu.mit.media.prg.tinkerbook_unity-1.apk\",\n" +
+            "\t\t\"file\": \"edu.mit.media.prg.tinkerbook_unity\",\n" +
+            "\t\t\"title\": \"Tinkerbook\",\n" +
+            "\t\t\"content_type\": \"Eduational\",\n" +
+            "\t\t\"version\": \"0.1\",\n" +
+            "\t\t\"visible\": 1,\n" +
+            "\t\t\"type\": \"app\"\n" +
+            "\t}]\n" +
+            "}";
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -984,6 +1019,22 @@ public class Home extends BaseActivity implements View.OnClickListener{
         overridePendingTransition(R.anim.grow_from_topright_to_bottomleft, R.anim.fade_out);
     }
 
+    public void removeItemAndUninstallSilently(final int position) {
+        AppInfoModel model = appInfoList.get(position);
+        LogUtil.createLog("Start Remove",model.getAppPckageName());
+        if(isRooted()) {
+            AppInstalationService.startActionUninstall(Home.this,model.getAppPckageName());
+        }
+
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                appInfoList.remove(position);
+                appInfoAdapter.notifyItemRemoved(position);
+            }
+        });
+
+    }
 
 
     /**
@@ -1656,7 +1707,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 hideDialog();
                 if(response.isSuccessful()&& response.code()==200){
-                    JsonObject jsonObject = response.body();
+                    //JsonObject jsonObject = response.body();
+
+                  JsonParser parser = new JsonParser();
+                  JsonObject jsonObject = parser.parse(mock).getAsJsonObject();
+
                     if(jsonObject!=null){
                         parseData(jsonObject);
                     }
@@ -1702,7 +1757,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
 
-    private void parseData(final JsonObject jsonObject){
+    private void
+    parseData(final JsonObject jsonObject){
 
         new AsyncTask<Void, Void, Void>() {
             @Override
@@ -1845,12 +1901,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
                     model.setUpdated(false);
                     model.setInstalationProcessInitiate(false);
                     model.setDownloadId(-1);
+                    mAppInfoTable.updateAppInfo(model);
+
 
                 }else if(compareResult<0){
                     model.setVisible(Constants.APP_NEED_TO_UNINSTALL);
+                    mAppInfoTable.updateAppInfo(model);
                 }
-
-                mAppInfoTable.updateAppInfo(model);
 
             }else{
                 mAppInfoTable.insertAppInfo(model);
@@ -2015,7 +2072,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private void checkDownLoadStatusAndProcess(final ArrayList<AppInfoModel> modelList){
 
         for (final AppInfoModel model:modelList) {
-            if (model.getDownloadStatus() != Constants.ACTION_DOWNLOAD_COMPLETED) {
+            if (model.getDownloadStatus() != Constants.ACTION_DOWNLOAD_COMPLETED&&model.getVisible()!= Constants.APP_NEED_TO_UNINSTALL) {
                 new AsyncTask<Void, Void, AppInfoModel>() {
                     @Override
                     protected AppInfoModel doInBackground(Void... params) {
@@ -2050,14 +2107,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
             if (cursor.moveToFirst()) {
                 int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
                 int status = cursor.getInt(columnIndex);
-
-                // Log.i("Fetched","checkStatusAndProcess status:: "+status);
-
                 if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                    /*if(isRooted()){
-                        AppInstalationService.startActionInstall(this,model.getAppPckageName());
-                    }*/
                     model.setDownloadStatus(Constants.ACTION_DOWNLOAD_COMPLETED);
+                    if(isRooted()){
+                       // model.setDownloadStatus(Constants.ACTION_ACTION_DOWNLOAD_COMPLETED_INSTALLING_FOR_ROOTED);
+                        if((!model.isInstalationStatus())||(model.isInstalationStatus()&&model.getIsUpdateVersionExist()==Constants.UPDATE_AVAILABLE))
+                        AppInstalationService.startActionInstall(this,model.getAppPckageName());
+                    }
+
                     if(cleanupMap!=null&&cleanupMap.size()>0){
                         cleanupMap.remove(model);
                         if(cleanupMap.size()==0){
@@ -2139,7 +2196,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         request.setTitle(title);
         request.addRequestHeader(ApiConstant.AUTHORIZATION, ApiConstant.BEARER+" "+accessToken);
         request.setDestinationUri(Uri.fromFile(destinationUriFile));
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+        //request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
 
         //   if(!checkDownloadSuceesStatus(downloadID)) {
         long downloadID = downloadManager.enqueue(request);
@@ -2190,28 +2247,23 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 isAppClick = true;
                 if (model.isInstalationStatus()) {
                     if (model.getVisible() == Constants.APP_NEED_TO_UNINSTALL) {
-                        Utils.unInstallApk(Home.this, model.getAppPckageName());
+                        if(isRooted()) {
+                            AppInstalationService.startActionUninstall(Home.this,model.getAppPckageName());
+                        }else{
+                            Utils.unInstallApk(Home.this, model.getAppPckageName());
+                        }
 
                     } else {
                         if (model.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE
                                 && model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED) {
-                            Utils.installAPK(Home.this, model.getAppPckageName());
-                            boolean status = updateInstallationProcessInitiate(model.getAppId(), true);
-                            if (status) {
-                                model.setInstalationProcessInitiate(true);
-                            }
+                            checkAndDoInstalingProcessForRooted(model);
                         } else {
                             startActivity(model.getIntent());
                         }
                     }
                 } else {
                     if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED) {
-                        Utils.installAPK(Home.this, model.getAppPckageName());
-                        boolean status = updateInstallationProcessInitiate(model.getAppId(), true);
-                        if (status) {
-                            model.setInstalationProcessInitiate(true);
-                        }
-                        LogUtil.createLog("updateAppInstallationProcessInfo", status + "");
+                        checkAndDoInstalingProcessForRooted(model);
                     } else if (model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_FAILED) {
                         Utils.showToast(Home.this, getResources().getString(R.string.download_failed));
                     } else {
@@ -2221,6 +2273,23 @@ public class Home extends BaseActivity implements View.OnClickListener{
             }
         }
     };
+
+
+    /**
+     *
+     * @param model
+     */
+    private void checkAndDoInstalingProcessForRooted(AppInfoModel model){
+        if(isRooted()){
+            Utils.showToast(Home.this,getResources().getString(R.string.instaling));
+        }else {
+            Utils.installAPK(Home.this, model.getAppPckageName());
+        }
+        boolean status = updateInstallationProcessInitiate(model.getAppId(), true);
+        if (status) {
+            model.setInstalationProcessInitiate(true);
+        }
+    }
 
 
     /**
