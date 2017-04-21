@@ -22,6 +22,7 @@ import android.support.multidex.MultiDexApplication;
 
 public class LauncherApplication extends MultiDexApplication {
 
+    public static boolean isDeviceRooted = true;
 
 
     @Override

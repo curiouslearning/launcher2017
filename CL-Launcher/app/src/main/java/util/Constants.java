@@ -67,6 +67,7 @@ public class Constants {
     public static final String ACTION_IN_APP_RECORD_TWO = "edu.mit.media.funf.RECORD";
 
     public static final String ACTION_APP_RELOAD = "action_app_reload";
+    public static final String ACTION_ROOTED = "action_rooted";
 
     public static final int ACTION_NOT_DOWNLOAD_YET = 0;
     public static final int ACTION_DOWNLOAD_STARTED = 1;

@@ -10,6 +10,7 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 
+import excelsoft.com.cl_launcher.LauncherApplication;
 import util.Constants;
 
 /**
@@ -33,6 +34,7 @@ public class AppInstalationService extends IntentService {
     private static final String UNINSTALL_CMD = "pm uninstall";
 
     private Process proc = null;
+    private String pckgName ="";
 
     public AppInstalationService() {
         super("AppInstalationService");
@@ -85,6 +87,7 @@ public class AppInstalationService extends IntentService {
      * parameters.
      */
     private void handleActionAppInstallation(String path) {
+        pckgName=path;
         path = Constants.APK_PATH+"/"+path.replaceAll("\\s+","") +".apk";
         File file = new File(path);
         if (file.exists()) {
@@ -102,6 +105,7 @@ public class AppInstalationService extends IntentService {
     private void handleActionAppUnInstall(String path) {
        // path = path.replaceAll("\\s+","") +".apk";
 
+        pckgName = path;
         PackageManager m = getPackageManager();
         String s = path;
         try {
@@ -135,11 +139,24 @@ public class AppInstalationService extends IntentService {
             proc.waitFor();
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+           // throw new RuntimeException when device is not rooted.
+            e.printStackTrace();
+            LauncherApplication.isDeviceRooted =false;
+            sendRootedMessageToHome(pckgName);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+           // throw new RuntimeException when device is not rooted.
+            e.printStackTrace();
+            LauncherApplication.isDeviceRooted =false;
+            sendRootedMessageToHome(pckgName);
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    private void sendRootedMessageToHome(String pckg){
+        Intent intent = new Intent(Constants.ACTION_ROOTED);
+        intent.putExtra("PCKG",pckg);
+        sendBroadcast(intent);
+
     }
 }

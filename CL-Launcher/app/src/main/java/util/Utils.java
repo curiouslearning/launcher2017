@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import excelsoft.com.cl_launcher.LauncherApplication;
+
 /**
  * Created by IMFCORP\alok.acharya on 19/12/16.
  */
@@ -264,7 +266,8 @@ public class Utils {
     }
 
     public static boolean isRooted(){
-        return findBinary("su");
+        return LauncherApplication.isDeviceRooted;
+       // return findBinary("su");
     }
 
     public static boolean findBinary(String binaryName) {

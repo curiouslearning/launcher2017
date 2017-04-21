@@ -241,7 +241,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
             "\t\t\"title\": \"Kid Coloring\",\n" +
             "\t\t\"content_type\": \"Educational\",\n" +
             "\t\t\"type\": \"app\",\n" +
-            "\t\t\"version\": \"9.0.0\",\n" +
+            "\t\t\"version\": \"8.8.0\",\n" +
             "\t\t\"visible\": 1\n" +
             "\t}, {\n" +
             "\t\t\"id\": 121,\n" +
@@ -431,6 +431,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
         unregisterReceiver(cleanUpReciever);
         unregisterReceiver(downLoadreceiver);
         unregisterReceiver(mAppReloadReceiver);
+        unregisterReceiver(listenRootedMsg);
 
         stopLocationService();
 
@@ -509,6 +510,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
         filter = new IntentFilter(Constants.ACTION_APP_RELOAD);
         registerReceiver(mAppReloadReceiver,filter);
+
+
+        filter = new IntentFilter(Constants.ACTION_ROOTED);
+        registerReceiver(listenRootedMsg,filter);
     }
 
     /**
@@ -1026,13 +1031,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
             AppInstalationService.startActionUninstall(Home.this,model.getAppPckageName());
         }
 
-        new Handler().post(new Runnable() {
+       /* new Handler().post(new Runnable() {
             @Override
             public void run() {
                 appInfoList.remove(position);
                 appInfoAdapter.notifyItemRemoved(position);
             }
-        });
+        });*/
 
     }
 
@@ -2013,6 +2018,22 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 cleanUpProcess(appInfoList);
             }else{
                 Utils.showToast(Home.this, getResources().getString(R.string.network_error_text));
+            }
+
+        }
+    };
+
+
+    public BroadcastReceiver listenRootedMsg = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            LogUtil.createLog("onReceive  : ",action);
+            if(action.equals(Constants.ACTION_ROOTED)) {
+                String packg = intent.getStringExtra("PCKG");
+                AppInfoModel model = packageMap.get(packg);
+                appInfoAdapter.notifyDataSetChanged();
+
             }
 
         }
