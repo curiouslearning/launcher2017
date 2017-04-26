@@ -26,6 +26,7 @@ android {
             //runProguard true
             //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-properties.txt'
             signingConfig signingConfigs.release
+            debuggable true
         }
         debug {
             debuggable true
@@ -52,15 +53,15 @@ android {
     productFlavors{
 
         PROD{
-            versionCode 7
-            versionName "0.1.7"
+            versionCode 10
+            versionName "0.2.0"
             buildConfigField "String", "SERVICE_BASE_PATH", "\"https://tablet-api.globallit.org\""
 
         }
 
         QA {
-            versionCode 8
-            versionName "0.1.8"
+            versionCode 10
+            versionName "0.2.0"
             buildConfigField "String", "SERVICE_BASE_PATH", "\"http://qa.tablet-api.globallit.org\""
 
         }

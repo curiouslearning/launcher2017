@@ -29,6 +29,8 @@ import java.io.IOException;
 import apihandler.ApiClient;
 import apihandler.ApiInterface;
 import apihandler.NetworkStatus;
+import database.APPInfoDB;
+import database.AppInfoTable;
 import device_admin_utill.CLDeviceManger;
 import device_admin_utill.DevicePolicyAdmin;
 import model.AppInfoModel;
@@ -62,6 +64,13 @@ public class SettingScreen extends AppCompatActivity implements
     public static final String CLEAN_UP_ACTION = "app_clean_up";
     private ApiInterface apiInterface;
     private ProgressDialog loadingDialog;
+    private String clPrevVersion = "";
+    private String clCurrntVersion = "";
+    int status =0;
+    APPInfoDB maDbAdapter;
+    AppInfoTable mAppInfoTable;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +102,7 @@ public class SettingScreen extends AppCompatActivity implements
 
         compName = new ComponentName(this, DevicePolicyAdmin.class);
         deviceManger = CLDeviceManger.getCLDevicePolicyManager(this);
+
         updateLauncherText();
 
         if(settingManager.getEnablePasswordFormat().equals(Constants.PWD_DEFAULT)){
@@ -129,8 +139,19 @@ public class SettingScreen extends AppCompatActivity implements
 
     private void updateLauncherText(){
         AppInfoModel appInfoModel = packageMap.get(clPckgName);
+        clPrevVersion = settingManager.getCLPreviousVersion();
+        clCurrntVersion = appInfoModel.getAppVersion();
+        status = Utils.versionCompare(clCurrntVersion,clPrevVersion);
         if(appInfoModel!=null) {
-            launcherVersionTxt.setText(getResources().getString(R.string.launcher_version)+appInfoModel.getAppVersion());
+
+            if(status==0) {
+                launcherVersionTxt.setText(getResources().getString(R.string.launcher_version) + clCurrntVersion);
+            }else if(status>0){
+                if(!clPrevVersion.equals("0"))
+                    launcherVersionTxt.setText(getResources().getString(R.string.launcher_version) + clPrevVersion);
+                else
+                    launcherVersionTxt.setText(getResources().getString(R.string.launcher_version) + clCurrntVersion);
+            }
             if (appInfoModel.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED &&
                     appInfoModel.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE) {
                 updateLauncherButton.setTextColor(getResources().getColor(R.color.black));
@@ -139,8 +160,48 @@ public class SettingScreen extends AppCompatActivity implements
                 updateLauncherButton.setTextColor(getResources().getColor(R.color.devider_color));
                 updateLauncherButton.setEnabled(false);
             }
+
+           /* if(clPrevVersion.equals("0")){
+                settingManager.setCLPreviousVersion(clCurrntVersion);
+                launcherVersionTxt.setText(getResources().getString(R.string.launcher_version) + settingManager.getCLPreviousVersion());
+                updateLauncherButton.setTextColor(getResources().getColor(R.color.devider_color));
+                updateLauncherButton.setEnabled(false);
+            }else{
+                if (appInfoModel.getDownloadStatus() == Constants.ACTION_DOWNLOAD_COMPLETED &&
+                        appInfoModel.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE && status>0) {
+                    updateLauncherButton.setTextColor(getResources().getColor(R.color.black));
+                    updateLauncherButton.setEnabled(true);
+
+                } else if (appInfoModel.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE && status>0) {
+                    updateLauncherButton.setTextColor(getResources().getColor(R.color.devider_color));
+                    updateLauncherButton.setEnabled(false);
+                    doUpdateClVersion(clPckgName);
+
+                }
+                launcherVersionTxt.setText(getResources().getString(R.string.launcher_version) + settingManager.getCLPreviousVersion());
+            }
+*/
         }
     }
+
+    private void doUpdateClVersion(String pckg) {
+        try {
+            maDbAdapter = new APPInfoDB(this);
+            maDbAdapter.open();
+            mAppInfoTable = new AppInfoTable(this);
+            mAppInfoTable.open();
+            mAppInfoTable.updateAppUpdateAvailableInfo(pckg, Constants.UPDATE_NOT_AVAILABLE);
+            mAppInfoTable.updateAppUpdateInfo(packageMap.get(pckg).getAppId(), true);
+            settingManager.setCLPreviousVersion(clCurrntVersion);
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            mAppInfoTable.close();
+            maDbAdapter.close();
+        }
+
+    }
+
 
     @Override
     public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -212,6 +273,7 @@ public class SettingScreen extends AppCompatActivity implements
         }else if(v.getId()==R.id.setting_Cl_update){
             if(packageMap.get(clPckgName).getIsUpdateVersionExist()
                     ==Constants.UPDATE_AVAILABLE){
+                doUpdateClVersion(clPckgName);
                 Utils.installAPK(SettingScreen.this,clPckgName);
             }
         }else if(v.getId()==R.id.setting_app_clean_up){
@@ -460,7 +522,7 @@ public class SettingScreen extends AppCompatActivity implements
                 if(response.isSuccessful()&&response.code()==200){
                     JsonObject jsonObject = response.body();
                     if(jsonObject!=null){
-                       Utils.showToast(SettingScreen.this,"Deployed successfully");
+                        Utils.showToast(SettingScreen.this,"Deployed successfully");
                         LogUtil.createLog("doCallForDeploymentReg ::",jsonObject.toString());
                     }
                 }else{

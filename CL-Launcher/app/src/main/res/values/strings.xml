@@ -55,5 +55,7 @@
     </string>
     <string name="manifest_version_error">Manifest Version Error.</string>
     <string name="instaling">Installing... Please wait.</string>
+    <string name="change_default_home_dialog_cancel">Cancel</string>
+    <string name="change_default_home_dialog_proceed">Proceed</string>
 
 </resources>

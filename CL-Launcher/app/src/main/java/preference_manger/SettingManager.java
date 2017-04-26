@@ -22,6 +22,7 @@ public class SettingManager{
     private final String GOT_IT_KEY = "got_it";
     private final String CL_PWD_KEY = "cl_pwd";
     private final String CL_MANIFEST_VERSION_KEY = "manifest_version_key";
+    private final String CL_PREVIOUS_VERSION = "prev_version_key";
 
     private SharedPreferences mSharedPreferences;
     private SharedPreferences.Editor mEditor;
@@ -133,6 +134,15 @@ public class SettingManager{
 
     public void setManifestVersion(String version){
         mEditor.putString(CL_MANIFEST_VERSION_KEY,version);
+        mEditor.commit();
+    }
+
+    public String getCLPreviousVersion(){
+        return mSharedPreferences.getString(CL_PREVIOUS_VERSION,"0");
+    }
+
+    public void setCLPreviousVersion(String version){
+        mEditor.putString(CL_PREVIOUS_VERSION,version);
         mEditor.commit();
     }
 

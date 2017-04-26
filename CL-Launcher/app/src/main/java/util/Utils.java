@@ -1,7 +1,9 @@
 package util;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import excelsoft.com.cl_launcher.Home;
 import excelsoft.com.cl_launcher.LauncherApplication;
 
 /**
@@ -310,11 +313,16 @@ public class Utils {
         return false;
     }
 
+    /**
+     *
+     * @param newVersionString
+     * @param oldVersionString
+     * @return
+     */
 
-
-    public static int versionCompare(String str1, String str2) {
-        String[] vals1 = str1.split("\\.");
-        String[] vals2 = str2.split("\\.");
+    public static int versionCompare(String newVersionString, String oldVersionString) {
+        String[] vals1 = newVersionString.split("\\.");
+        String[] vals2 = oldVersionString.split("\\.");
         int i = 0;
         // set index to first non-equal ordinal or length of shortest version string
         while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
@@ -330,5 +338,23 @@ public class Utils {
         return Integer.signum(vals1.length - vals2.length);
     }
 
+
+
+    public static void resetPreferredLauncher(Context context) {
+        PackageManager pm = context.getPackageManager();
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("android.intent.action.MAIN");
+        filter.addCategory("android.intent.category.HOME");
+        filter.addCategory("android.intent.category.DEFAULT");
+
+        ComponentName component = new ComponentName(context.getPackageName(), Home.class.getName());
+
+        ComponentName[] components = new ComponentName[] {new ComponentName("com.android.launcher", "com.android.launcher.Launcher"), component};
+
+        pm.clearPackagePreferredActivities("com.android.launcher");
+        pm.addPreferredActivity(filter, IntentFilter.MATCH_CATEGORY_EMPTY, components, component);
+
+    }
 
 }

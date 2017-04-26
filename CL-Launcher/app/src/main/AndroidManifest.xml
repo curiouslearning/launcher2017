@@ -26,8 +26,8 @@
     <uses-permission android:name="android.permission.SEND_DOWNLOAD_COMPLETED_INTENTS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.DELETE_PACKAGES"/>
-
+    <uses-permission android:name="android.permission.DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.SET_PREFERRED_APPLICATIONS"/>
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
@@ -93,6 +93,7 @@
         <receiver android:name="backgroundservice.PackageRemoveReciever">
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
+
                 <data android:scheme="package" />
             </intent-filter>
         </receiver>
@@ -142,7 +143,8 @@
             android:exported="false" />
         <service
             android:name="backgroundservice.AppInstalationService"
-            android:exported="false"></service>
+            android:exported="false" />
+
     </application>
 
 </manifest>

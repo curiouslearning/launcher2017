@@ -291,7 +291,7 @@ public class AppInfoModel {
         return  intent;
     }
 
-    /*@Override
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -312,5 +312,5 @@ public class AppInfoModel {
         final String name = intent.getComponent().getClassName();
         result = 31 * result + (name != null ? name.hashCode() : 0);
         return result;
-    }*/
+    }
 }
