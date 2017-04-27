@@ -2085,7 +2085,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                                     model.getDownloadStatus() == Constants.ACTION_DOWNLOAD_FAILED) {
                                 initDownLoad(model);
                             }
-                            appInfoAdapter.notifyItemChanged(modelList.indexOf(model));
+                            appInfoAdapter.notifyDataSetChanged();
                         }
                     }
                 }.execute();
