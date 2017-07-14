@@ -236,11 +236,17 @@ public class AppInfoTable {
 
     public boolean updateAppDownLoadInfo(int id,int downloadStatus){
 
-        System.out.println("updating downloadStatus data into  data base...");
-        ContentValues initialValues = new ContentValues();
-        initialValues.put(APP_DOWNLOAD_STATUS, ""+downloadStatus);
-        return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) >0;
+        try {
+            System.out.println("updating downloadStatus data into  data base...");
+            ContentValues initialValues = new ContentValues();
+            initialValues.put(APP_DOWNLOAD_STATUS, "" + downloadStatus);
+            return this.mDb.update(APP_INFO_TABLE, initialValues, APP_ID + " = " + id, null) > 0;
+        } catch(Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
+
 
 
     public boolean updateAppDownLoadID(int id,int downLoadId){

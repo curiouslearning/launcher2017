@@ -53,15 +53,15 @@ android {
     productFlavors{
 
         PROD{
-            versionCode 11
-            versionName "0.2.1"
+            versionCode 12
+            versionName "0.2.2"
             buildConfigField "String", "SERVICE_BASE_PATH", "\"https://tablet-api.globallit.org\""
 
         }
 
         QA {
-            versionCode 11
-            versionName "0.2.1"
+            versionCode 12
+            versionName "0.2.2"
             buildConfigField "String", "SERVICE_BASE_PATH", "\"http://qa.tablet-api.globallit.org\""
 
         }
