@@ -217,7 +217,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     public static HashMap<String,AppInfoModel > packageMap = new HashMap<>();
     private HomeKeyLocker mHomeKeyLocker;
     private Timer timerTask = null;
-    public static  String clPckgName = "excelsoft.com.cl_launcher";
+    //public static  String clPckgName = "excelsoft.com.cl_launcher";
+    public static final String clPckgName = "com.excelsoft.cl-launcher";
     // HashMap<Long,AppInfoModel> downLoadMap = new HashMap<>();
     // HashMap<Long,Integer> downLoadMapPosition = new HashMap<>();
     // HashMap<String,Long> downLoadIdMap = new HashMap<>();
@@ -241,7 +242,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private void allWidgetInit(){
         setContentView(R.layout.home);
-        clPckgName = getPackageName();
+       // clPckgName = getPackageName();
         isExitClick = false;
         screenStateFilter = new IntentFilter();
         screenStateFilter.addAction(Intent.ACTION_USER_PRESENT);
@@ -684,10 +685,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
         return info;
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
+//    @Override
+//    protected void onStop() {
+//        super.onStop();
+//    }
 
 
 
