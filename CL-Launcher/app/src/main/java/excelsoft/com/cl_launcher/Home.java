@@ -217,8 +217,10 @@ public class Home extends BaseActivity implements View.OnClickListener{
     public static HashMap<String,AppInfoModel > packageMap = new HashMap<>();
     private HomeKeyLocker mHomeKeyLocker;
     private Timer timerTask = null;
-    //public static  String clPckgName = "excelsoft.com.cl_launcher";
+    public static final String clPckgName1 = "excelsoft.com.cl_launcher";
     public static final String clPckgName = "com.excelsoft.cl-launcher";
+//    public static final String clPckgName2 ="com.android.launcher";
+
     // HashMap<Long,AppInfoModel> downLoadMap = new HashMap<>();
     // HashMap<Long,Integer> downLoadMapPosition = new HashMap<>();
     // HashMap<String,Long> downLoadIdMap = new HashMap<>();
@@ -695,9 +697,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
         Log.d("Focus debug", "Focus changed !");
-
+        super.onWindowFocusChanged(hasFocus);
         if (!hasFocus) {
             Log.d("Focus debug", "Lost focus !");
             mBackDown = mHomeDown = false;
@@ -705,10 +706,12 @@ public class Home extends BaseActivity implements View.OnClickListener{
             sendBroadcast(closeDialog);
             ActivityManager activityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
             foregroundPkg = UStats.getProcessName(this);
-            Log.d("Focus packageName", foregroundPkg );
+            Log.d("Focus packageName", foregroundPkg);
             if (foregroundPkg != null && (foregroundPkg.equals("com.android.systemui")
                     ||foregroundPkg.equals("com.google.process.gapps")
                     ||foregroundPkg.equals(clPckgName)
+                    ||foregroundPkg.equals(clPckgName1)
+//                    ||foregroundPkg.equals(clPckgName2)
                     ||foregroundPkg.equals("com.vlingo.midas")
                     ||foregroundPkg.equals("com.google.android.gms"))
                     && !isAppClick) {
@@ -725,6 +728,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
         }
+
     }
 
 
@@ -980,6 +984,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
         dismisPopup();
     }
 
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        return true;
+    }
+
     private  void dismisPopup(){
         if(rightHandPopUp!=null && rightHandPopUp.isShowing()){
             rightHandPopUp.dismiss();
@@ -1052,7 +1061,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
                         mAppInfoTable.updateAppUpdateInfo(packageMap.get(added_package).getAppId(), true);
                     }
 
-                    if(!added_package.equals(clPckgName)){
+                    if(!added_package.equals(clPckgName) /*&& !added_package.equals(clPckgName1)*/){
                         //  stopTimer();
                         loadApplications();
                     }

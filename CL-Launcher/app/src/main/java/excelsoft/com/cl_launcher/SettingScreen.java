@@ -1,5 +1,6 @@
 package excelsoft.com.cl_launcher;
 
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -8,7 +9,9 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -41,9 +44,13 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import util.Constants;
 import util.LogUtil;
+import util.UStats;
 import util.Utils;
 
 import static excelsoft.com.cl_launcher.Home.clPckgName;
+import static excelsoft.com.cl_launcher.Home.clPckgName1;
+//import static excelsoft.com.cl_launcher.Home.clPckgName2;
+
 import static excelsoft.com.cl_launcher.Home.packageMap;
 
 public class SettingScreen extends AppCompatActivity implements
@@ -69,6 +76,7 @@ public class SettingScreen extends AppCompatActivity implements
     int status =0;
     APPInfoDB maDbAdapter;
     AppInfoTable mAppInfoTable;
+    String foregroundPkg ;
 
 
 
@@ -139,6 +147,9 @@ public class SettingScreen extends AppCompatActivity implements
 
     private void updateLauncherText(){
         AppInfoModel appInfoModel = packageMap.get(clPckgName);
+        if(appInfoModel==null){
+            return;
+        }
         clPrevVersion = settingManager.getCLPreviousVersion();
         clCurrntVersion = appInfoModel.getAppVersion();
         status = Utils.versionCompare(clCurrntVersion,clPrevVersion);
@@ -286,7 +297,7 @@ public class SettingScreen extends AppCompatActivity implements
     }
 
     private void openQrcodeScanner() {
-        startActivityForResult(new Intent(this, QRCodeScanning.class),121);
+        startActivityForResult(new Intent(this, QRCodeScanning.class), 121);
     }
 
     private void sentEventHomeToAppCleanup() {
@@ -421,7 +432,39 @@ public class SettingScreen extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+            Log.d("Focus debug", "Focus changed !");
+        super.onWindowFocusChanged(hasFocus);
+            if (!hasFocus) {
+                Log.d("Focus debug", "Lost focus !");
+                Intent closeDialog = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+                sendBroadcast(closeDialog);
+                ActivityManager activityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+                foregroundPkg = UStats.getProcessName(this);
+                Log.d("Focus packageName", foregroundPkg );
+                if (foregroundPkg != null && (foregroundPkg.equals("com.android.systemui")
+                        ||foregroundPkg.equals("com.google.process.gapps")
+                        ||foregroundPkg.equals(clPckgName)
+                        ||foregroundPkg.equals(clPckgName1)
+//                        ||foregroundPkg.equals(clPckgName2)
+                        ||foregroundPkg.equals("com.vlingo.midas")
+                        ||foregroundPkg.equals("com.google.android.gms"))) {
+                    activityManager.moveTaskToFront(getTaskId(), 0);
+                    // startActivity(new Intent(this,Home.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                    Log.d("Focus moveTaskToFront ", getTaskId()+"");
+                }
 
+           /* if (foregroundPkg != null && !foregroundPkg.equals(clPckgName)&& !isAppClick) {
+               // activityManager.moveTaskToFront(getTaskId(), 0);
+                startActivity(new Intent(this,Home.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK));
+                Log.d("Focus moveTaskToFront ", getTaskId()+"");
+            }*/
+
+
+            }
+
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
