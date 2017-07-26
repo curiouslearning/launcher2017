@@ -851,7 +851,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
 
                 if (apps != null) {
-                    appInfoList = mAppInfoTable.getAppInfo(apps,manager);
+                    try {
+                        appInfoList = mAppInfoTable.getAppInfo(apps,manager);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 return null;
             }
