@@ -45,7 +45,8 @@
     <string name="cleanup_app_string">Apps Cleanup</string>
     <string name="download_failed">Download failed.</string>
 
-    <string name="qr_code_scan_txt">Deployment</string>
+    <string name="qr_code_scan_txt">ASSIGN DEPLOYMENT</string>
+    <string name="qr_code_scan_txt_msg">You will need a partners.curiouslearning.org login to use this feature</string>
     <string name="invalid_json">Invalid result from QR code.</string>
     <string name="end_point">End Point :</string>
     <string name="error_with_manifest">Something went wrong in manifest data.</string>

@@ -167,9 +167,13 @@ public class SettingScreen extends AppCompatActivity implements
                     appInfoModel.getIsUpdateVersionExist() == Constants.UPDATE_AVAILABLE) {
                 updateLauncherButton.setTextColor(getResources().getColor(R.color.black));
                 updateLauncherButton.setEnabled(true);
+                updateLauncherButton.setBackgroundResource(R.drawable.btn_enable_background);
             } else {
                 updateLauncherButton.setTextColor(getResources().getColor(R.color.devider_color));
                 updateLauncherButton.setEnabled(false);
+                updateLauncherButton.setBackgroundResource(R.drawable.btn_disable_background);
+
+
             }
 
            /* if(clPrevVersion.equals("0")){
