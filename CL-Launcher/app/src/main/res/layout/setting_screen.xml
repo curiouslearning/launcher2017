@@ -165,8 +165,24 @@
             android:onClick="wifiClick"/>
 
         <Button
-            android:id="@+id/setting_Cl_update"
+            android:id="@+id/connect_wifi"
             android:layout_below="@+id/setting_wifi"
+            android:layout_marginTop="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect to open Wi-Fi"
+            android:textColor="@color/white"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textSize="@dimen/option_item_text_size"
+            android:visibility="visible"
+            android:background="@drawable/btn_enable_background"
+            />
+
+
+        <Button
+            android:id="@+id/setting_Cl_update"
+            android:layout_below="@+id/connect_wifi"
             android:layout_marginTop="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

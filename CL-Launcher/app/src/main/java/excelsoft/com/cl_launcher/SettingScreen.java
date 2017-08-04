@@ -4,14 +4,17 @@ import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -21,6 +24,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.JsonObject;
 
@@ -28,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.List;
 
 import apihandler.ApiClient;
 import apihandler.ApiInterface;
@@ -49,9 +54,9 @@ import util.Utils;
 
 import static excelsoft.com.cl_launcher.Home.clPckgName;
 import static excelsoft.com.cl_launcher.Home.clPckgName1;
-//import static excelsoft.com.cl_launcher.Home.clPckgName2;
-
 import static excelsoft.com.cl_launcher.Home.packageMap;
+
+//import static excelsoft.com.cl_launcher.Home.clPckgName2;
 
 public class SettingScreen extends AppCompatActivity implements
         RadioGroup.OnCheckedChangeListener,View.OnClickListener,Switch.OnCheckedChangeListener {
@@ -62,7 +67,7 @@ public class SettingScreen extends AppCompatActivity implements
     private View llPwdView;
     private RadioButton dfltPwd,clPwd,devicePwd;
     private RadioGroup pwdRadioGrp;
-    private Button savePwdBtn,cancelPwdBtn,updateLauncherButton,cleanUpButton,setting_app_qrCodeScanner;
+    private Button savePwdBtn,cancelPwdBtn,connectWifi,updateLauncherButton,cleanUpButton,setting_app_qrCodeScanner;
     private EditText edPwd,edCpwd;
     private SettingManager settingManager;
     private TextView txtMsg;
@@ -95,6 +100,7 @@ public class SettingScreen extends AppCompatActivity implements
         edCpwd = (EditText) findViewById(R.id.ed_cpwd);
         txtMsg = (TextView) findViewById(R.id.textViewMsg);
         updateLauncherButton = (Button) findViewById(R.id.setting_Cl_update);
+        connectWifi = (Button) findViewById(R.id.connect_wifi);
         cleanUpButton = (Button) findViewById(R.id.setting_app_clean_up);
         tabletIdTxt= (TextView) findViewById(R.id.setting_tablet_id);
         manifestVersionTxt= (TextView) findViewById(R.id.setting_manifest_version);
@@ -138,6 +144,7 @@ public class SettingScreen extends AppCompatActivity implements
         mSwitch.setOnCheckedChangeListener(this);
         savePwdBtn.setOnClickListener(this);
         cancelPwdBtn.setOnClickListener(this);
+        connectWifi.setOnClickListener(this);
         updateLauncherButton.setOnClickListener(this);
         cleanUpButton.setOnClickListener(this);
         setting_app_qrCodeScanner.setOnClickListener(this);
@@ -295,8 +302,9 @@ public class SettingScreen extends AppCompatActivity implements
 
             sentEventHomeToAppCleanup();
         }else if(v.getId()==R.id.setting_app_qrCodeScanner){
-
             openQrcodeScanner();
+        }else if(v.getId()==R.id.connect_wifi){
+            connectWifi();
         }
     }
 
@@ -484,11 +492,66 @@ public class SettingScreen extends AppCompatActivity implements
         return (super.onOptionsItemSelected(menuItem));
     }
 
+    private void connectWifi() {
+
+
+
+        int savedlevel = 0;
+        WifiManager wifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
+//        wifiManager.addNetwork(conf);
+
+        String networkSSID = null;
+        List<ScanResult> scanList = wifiManager.getScanResults();
+        for (ScanResult config : scanList) {
+//            ssidList.add(config.SSID);
+            String capabilities = config.capabilities;
+            if (capabilities.toUpperCase().contains("WEP")) {
+                // WEP Network
+            } else if (capabilities.toUpperCase().contains("WPA")
+                    || capabilities.toUpperCase().contains("WPA2")) {
+                // WPA or WPA2 Network
+            } else {
+                // Open Network
+                int level = wifiManager.calculateSignalLevel(config.level, 5);
+                if (level > savedlevel) {
+                    savedlevel = level;
+                    networkSSID = config.SSID;
+                }
+            }
+        }
+
+        if (networkSSID == null) {
+            Toast.makeText(this, "No Open WIFI found.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        WifiConfiguration conf = new WifiConfiguration();
+        conf.SSID = "\"" + networkSSID + "\"";
+        conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        wifiManager.addNetwork(conf);
+
+        List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
+        for (WifiConfiguration i : list) {
+            if (i.SSID != null && i.SSID.equals("\"" + networkSSID + "\"")) {
+                wifiManager.disconnect();
+                wifiManager.enableNetwork(i.networkId, true);
+                if (wifiManager.reconnect()) {
+                    Toast.makeText(this, "Connecting to open WIFI (" + networkSSID + ").", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Unable to connect. Please try again!!!", Toast.LENGTH_SHORT).show();
+                }
+
+                break;
+            }
+        }
+
+
+    }
+
 
     public void wifiClick(View view){
         startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
     }
-
 
 
     private void showDialog(){
