@@ -348,7 +348,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private void requestAllPermission(){
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!checkIfAlreadyhavePermission(this)) {
                 requestForSpecificPermission(this);
             } else{
@@ -356,11 +356,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 preventStatusBarWithCheckingPermission();
                 openDBandLoadApp();
             }
-        }else{
-            Utils.createCLAPPDirectory();
-            preventStatusBarWithCheckingPermission();
-            openDBandLoadApp();
-        }
+//        }else{
+//            Utils.createCLAPPDirectory();
+//            preventStatusBarWithCheckingPermission();
+//            openDBandLoadApp();
+//        }
 
 
     }
@@ -416,7 +416,6 @@ public class Home extends BaseActivity implements View.OnClickListener{
             mAppInfoTable.close();
         if(appInfoDB!=null)
             appInfoDB.close();
-
 
     }
 
@@ -1601,17 +1600,25 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
 
     private void showDialog(){
-        if(loadingDialog!=null&&!loadingDialog.isShowing()) {
-            loadingDialog.setMessage(getResources().getString(R.string.initializingTxt));
-            loadingDialog.setCancelable(false);
-            loadingDialog.show();
+        try {
+            if (loadingDialog != null && !loadingDialog.isShowing()) {
+                loadingDialog.setMessage(getResources().getString(R.string.initializingTxt));
+                loadingDialog.setCancelable(false);
+                loadingDialog.show();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
 
     private void hideDialog(){
-        if(loadingDialog!=null&&loadingDialog.isShowing()) {
-            loadingDialog.dismiss();
+        try {
+            if (loadingDialog != null && loadingDialog.isShowing()) {
+                loadingDialog.dismiss();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -2311,8 +2318,5 @@ public class Home extends BaseActivity implements View.OnClickListener{
     private String getValidVersion(String version){
         return  version.contains("-")? version.replace("-","."):version;
     }
-
-
-
 
 }
