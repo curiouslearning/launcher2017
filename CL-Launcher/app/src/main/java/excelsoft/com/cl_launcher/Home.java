@@ -270,11 +270,17 @@ public class Home extends BaseActivity implements View.OnClickListener{
         registerIntentReceivers();
         //  setDefaultWallpaper();
         bindApplications();
-        requestAllPermission();
-        // bindFavorites(true);
-        // bindRecents();
-        //  bindButtons();
-        popupSetup();
+        Log.e("Bootcrash", "Waiting 10 seconds before I call to requestAllPermission");
+        Handler preventStartupRaceCondition = new Handler();
+        preventStartupRaceCondition.postDelayed(new Runnable() {
+            public void run() {
+                // Don't do anything for 10 seconds
+                Log.e("Bootcrash", "That was long a 10 seconds!");
+                requestAllPermission();
+                popupSetup();
+            }
+        }, 10000);
+
         mGridEntry = AnimationUtils.loadAnimation(this, R.anim.grid_entry);
         mGridExit = AnimationUtils.loadAnimation(this, R.anim.grid_exit);
     }
@@ -366,11 +372,13 @@ public class Home extends BaseActivity implements View.OnClickListener{
     }
 
     private void openDBandLoadApp(){
-        appInfoDB = new APPInfoDB(this);
 
+        appInfoDB = new APPInfoDB(this);
         appInfoDB.open();
+
         mAppInfoTable = new AppInfoTable(this);
         mAppInfoTable.open();
+
         loadApplications();
     }
 
