@@ -231,12 +231,14 @@ public class Home extends BaseActivity implements View.OnClickListener{
     public static HashMap<String,AppInfoModel > packageFilterMap = new HashMap<>();
     public static boolean isAppClick = false;
     String foregroundPkg ;
+//    private boolean isActivityResumed;
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
         allFunctionalInitiationAction();
+
 
     }
 
@@ -270,11 +272,20 @@ public class Home extends BaseActivity implements View.OnClickListener{
         registerIntentReceivers();
         //  setDefaultWallpaper();
         bindApplications();
-        requestAllPermission();
         // bindFavorites(true);
         // bindRecents();
         //  bindButtons();
-        popupSetup();
+        showDialog();
+        Handler preventStartupRaceCondition = new Handler();
+        preventStartupRaceCondition.postDelayed(new Runnable() {
+            public void run() {
+                // Don't do anything for 10 seconds
+                Log.e("Bootcrash", "That was long a 10 seconds!");
+                requestAllPermission();
+                popupSetup();
+                hideDialog();
+            }
+        }, 10000);
         mGridEntry = AnimationUtils.loadAnimation(this, R.anim.grid_entry);
         mGridExit = AnimationUtils.loadAnimation(this, R.anim.grid_exit);
     }
@@ -367,10 +378,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private void openDBandLoadApp(){
         appInfoDB = new APPInfoDB(this);
-
         appInfoDB.open();
+
         mAppInfoTable = new AppInfoTable(this);
         mAppInfoTable.open();
+
         loadApplications();
     }
 
@@ -387,7 +399,8 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     public void onDestroy() {
         super.onDestroy();
-
+//        isActivityResumed=false;
+        hideDialog();
         // Remove the callback for the cached drawables or we leak
         // the previous Home screen on orientation change
         final int count = mApplicationsList.size();
@@ -433,6 +446,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onResume() {
         super.onResume();
+//        isActivityResumed=true;
         //  bindRecents();
         isAppClick=false;
         registerReceiver(mScreenStateReceiver, screenStateFilter);
@@ -825,6 +839,9 @@ public class Home extends BaseActivity implements View.OnClickListener{
             @Override
             protected void onPostExecute(Void aVoid) {
                 super.onPostExecute(aVoid);
+                if (Home.this.isDestroyed()) { // or call isFinishing() if min sdk version < 17
+                    return;
+                }
                 hideDialog();
                 if(!(appInfoList.size()>0)) {
                     initDeviceRegistrationProcess();
@@ -850,11 +867,11 @@ public class Home extends BaseActivity implements View.OnClickListener{
                 Collections.sort(apps, new ResolveInfo.DisplayNameComparator(manager));
 
                 if (apps != null) {
-                    try {
+//                    try {
                         appInfoList = mAppInfoTable.getAppInfo(apps,manager);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
                 }
                 return null;
             }
@@ -1601,7 +1618,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
 
     private void showDialog(){
         try {
-            if (loadingDialog != null && !loadingDialog.isShowing()) {
+            if (loadingDialog != null && !loadingDialog.isShowing() /*&& isActivityResumed*/) {
                 loadingDialog.setMessage(getResources().getString(R.string.initializingTxt));
                 loadingDialog.setCancelable(false);
                 loadingDialog.show();
@@ -1956,6 +1973,7 @@ public class Home extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onPause() {
         super.onPause();
+//        isActivityResumed=false;
        /* if (!isAppClick) {
             startActivity(new Intent(this,Home.class).setFlags(FLAG_ACTIVITY_CLEAR_TASK|FLAG_ACTIVITY_NEW_TASK));
         }*/
